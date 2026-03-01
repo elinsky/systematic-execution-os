@@ -1,5 +1,7 @@
 """FastAPI application factory and startup/shutdown lifecycle."""
 
+from contextlib import asynccontextmanager
+
 import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,16 +12,25 @@ from sidecar.utils.logging import configure_logging
 logger = structlog.get_logger(__name__)
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    configure_logging()
+    logger.info("startup_begin")
+    await create_all_tables()
+    logger.info("startup_complete", db="tables_ready")
+    yield
+    logger.info("shutdown")
+
+
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
-    configure_logging()
-
     app = FastAPI(
         title="BAM Systematic Execution OS",
         description="Sidecar service for cross-project intelligence, automation, and query API",
         version="0.1.0",
         docs_url="/docs",
         redoc_url="/redoc",
+        lifespan=lifespan,
     )
 
     app.add_middleware(
@@ -30,18 +41,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    @app.on_event("startup")
-    async def on_startup() -> None:
-        logger.info("startup_begin")
-        await create_all_tables()
-        logger.info("startup_complete", db="tables_ready")
-
-    @app.on_event("shutdown")
-    async def on_shutdown() -> None:
-        logger.info("shutdown")
-
-    # Mount routers
-    from sidecar.api.router import router  # noqa: E402
+    from sidecar.api.router import router
     app.include_router(router, prefix="/api/v1")
 
     @app.get("/health", tags=["health"])
