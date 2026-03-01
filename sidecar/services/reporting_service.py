@@ -260,23 +260,17 @@ class ReportingService:
             projects_by_status[key] = projects_by_status.get(key, 0) + 1
 
         pms_at_risk_count = sum(
-            1
-            for pm in all_pms
-            if pm.health_status in (HealthStatus.RED, HealthStatus.YELLOW)
+            1 for pm in all_pms if pm.health_status in (HealthStatus.RED, HealthStatus.YELLOW)
         )
 
         open_risks = await self._risk_repo.list(open_only=True)
-        critical_risks = sum(
-            1 for r in open_risks if r.severity == RiskSeverity.CRITICAL
-        )
+        critical_risks = sum(1 for r in open_risks if r.severity == RiskSeverity.CRITICAL)
 
         pending_decisions = await self._decision_repo.list_pending()
 
         at_risk_milestones = await self._milestone_repo.list_at_risk()
         overdue_milestones = sum(
-            1
-            for m in at_risk_milestones
-            if m.target_date and m.target_date < today
+            1 for m in at_risk_milestones if m.target_date and m.target_date < today
         )
 
         # Upcoming go-lives: PMs with go_live_target_date in next 60 days
@@ -284,8 +278,7 @@ class ReportingService:
         upcoming_go_lives = [
             pm
             for pm in all_pms
-            if pm.go_live_target_date
-            and today <= pm.go_live_target_date <= cutoff
+            if pm.go_live_target_date and today <= pm.go_live_target_date <= cutoff
         ]
         upcoming_go_lives.sort(key=lambda pm: pm.go_live_target_date)  # type: ignore[arg-type]
 

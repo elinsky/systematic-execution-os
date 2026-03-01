@@ -16,10 +16,10 @@ from sidecar.persistence.risk import RiskRepository
 from sidecar.services.decision_service import DecisionService
 from sidecar.services.milestone_service import MilestoneService
 from sidecar.services.operating_review_service import OperatingReviewService
-from sidecar.services.reporting_service import ReportingService
 from sidecar.services.pm_coverage_service import PMCoverageService
 from sidecar.services.pm_need_service import PMNeedService
 from sidecar.services.project_service import ProjectService
+from sidecar.services.reporting_service import ReportingService
 from sidecar.services.risk_service import RiskService
 
 # ── Repository dependencies ────────────────────────────────────────────────
