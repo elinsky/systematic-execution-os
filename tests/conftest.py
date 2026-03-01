@@ -1,5 +1,6 @@
 """Shared pytest fixtures for all tests."""
 
+import httpx
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient
@@ -37,8 +38,12 @@ async def test_client(db_session: AsyncSession):
     """AsyncClient with in-memory DB injected via FastAPI dependency override."""
     from sidecar.database import get_db_session
 
-    app = create_app()
-    app.dependency_overrides[get_db_session] = lambda: db_session
+    async def override_db_session():
+        yield db_session
 
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    app = create_app()
+    app.dependency_overrides[get_db_session] = override_db_session
+
+    transport = httpx.ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
