@@ -15,6 +15,7 @@ from sidecar.api import (  # noqa: E402
     pm_coverage,
     pm_needs,
     projects,
+    reports,
     risks,
 )
 
@@ -28,3 +29,4 @@ router.include_router(capabilities.router, prefix="/capabilities", tags=["capabi
 router.include_router(
     operating_review.router, prefix="/operating-review", tags=["operating-review"]
 )
+router.include_router(reports.router, prefix="/reports", tags=["reports"])

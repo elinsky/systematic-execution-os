@@ -16,6 +16,7 @@ from sidecar.persistence.risk import RiskRepository
 from sidecar.services.decision_service import DecisionService
 from sidecar.services.milestone_service import MilestoneService
 from sidecar.services.operating_review_service import OperatingReviewService
+from sidecar.services.reporting_service import ReportingService
 from sidecar.services.pm_coverage_service import PMCoverageService
 from sidecar.services.pm_need_service import PMNeedService
 from sidecar.services.project_service import ProjectService
@@ -113,4 +114,19 @@ def get_operating_review_service(
         blocker_age_threshold_days=settings.blocker_age_alert_days,
         milestone_due_threshold_days=settings.milestone_due_alert_days,
         pm_open_needs_threshold=settings.pm_open_needs_alert_count,
+    )
+
+
+def get_reporting_service(
+    session: AsyncSession = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
+) -> ReportingService:
+    return ReportingService(
+        pm_repo=PMCoverageRepository(session),
+        need_repo=PMNeedRepository(session),
+        project_repo=ProjectRepository(session),
+        milestone_repo=MilestoneRepository(session),
+        risk_repo=RiskRepository(session),
+        decision_repo=DecisionRepository(session),
+        blocker_age_threshold_days=settings.blocker_age_alert_days,
     )
