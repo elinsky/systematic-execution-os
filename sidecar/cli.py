@@ -131,13 +131,15 @@ def cmd_pm_list(args: argparse.Namespace) -> None:
     headers = ["PM ID", "Name", "Stage", "Health", "Last Touch"]
     rows = []
     for pm in data:
-        rows.append([
-            pm.get("pm_id", ""),
-            pm.get("pm_name", ""),
-            pm.get("onboarding_stage", ""),
-            pm.get("health_status", ""),
-            pm.get("last_touchpoint_date") or "-",
-        ])
+        rows.append(
+            [
+                pm.get("pm_id", ""),
+                pm.get("pm_name", ""),
+                pm.get("onboarding_stage", ""),
+                pm.get("health_status", ""),
+                pm.get("last_touchpoint_date") or "-",
+            ]
+        )
     print(_table(headers, rows))
     print(f"\n{len(rows)} PM(s) total")
 
@@ -148,9 +150,17 @@ def cmd_pm_show(args: argparse.Namespace) -> None:
     pm = data.get("pm", {})
     print(f"=== PM: {pm.get('pm_name', '')} ({pm.get('pm_id', '')}) ===\n")
     detail_keys = [
-        "pm_id", "pm_name", "team_or_pod", "strategy_type", "region",
-        "coverage_owner", "onboarding_stage", "health_status",
-        "go_live_target_date", "last_touchpoint_date", "notes",
+        "pm_id",
+        "pm_name",
+        "team_or_pod",
+        "strategy_type",
+        "region",
+        "coverage_owner",
+        "onboarding_stage",
+        "health_status",
+        "go_live_target_date",
+        "last_touchpoint_date",
+        "notes",
     ]
     print(_kv(pm, detail_keys))
 
@@ -160,13 +170,15 @@ def cmd_pm_show(args: argparse.Namespace) -> None:
         headers = ["Need ID", "Title", "Category", "Urgency", "Status"]
         rows = []
         for n in open_needs:
-            rows.append([
-                _short_id(n.get("pm_need_id", "")),
-                n.get("title", "")[:50],
-                n.get("category", ""),
-                n.get("urgency", ""),
-                n.get("status", ""),
-            ])
+            rows.append(
+                [
+                    _short_id(n.get("pm_need_id", "")),
+                    n.get("title", "")[:50],
+                    n.get("category", ""),
+                    n.get("urgency", ""),
+                    n.get("status", ""),
+                ]
+            )
         print(_table(headers, rows))
 
     blockers = data.get("active_blockers", [])
@@ -175,13 +187,15 @@ def cmd_pm_show(args: argparse.Namespace) -> None:
         headers = ["Risk ID", "Title", "Severity", "Type", "Status"]
         rows = []
         for b in blockers:
-            rows.append([
-                _short_id(b.get("risk_id", "")),
-                b.get("title", "")[:50],
-                b.get("severity", ""),
-                b.get("risk_type", ""),
-                b.get("status", ""),
-            ])
+            rows.append(
+                [
+                    _short_id(b.get("risk_id", "")),
+                    b.get("title", "")[:50],
+                    b.get("severity", ""),
+                    b.get("risk_type", ""),
+                    b.get("status", ""),
+                ]
+            )
         print(_table(headers, rows))
 
     milestones = data.get("upcoming_milestones", [])
@@ -190,12 +204,14 @@ def cmd_pm_show(args: argparse.Namespace) -> None:
         headers = ["Title", "Target Date", "Status", "Confidence"]
         rows = []
         for m in milestones:
-            rows.append([
-                m.get("title", "")[:40],
-                m.get("target_date") or "-",
-                m.get("status", ""),
-                m.get("confidence", ""),
-            ])
+            rows.append(
+                [
+                    m.get("title", "")[:40],
+                    m.get("target_date") or "-",
+                    m.get("status", ""),
+                    m.get("confidence", ""),
+                ]
+            )
         print(_table(headers, rows))
 
 
@@ -228,14 +244,16 @@ def cmd_needs_list(args: argparse.Namespace) -> None:
     headers = ["Need ID", "PM", "Title", "Category", "Urgency", "Status"]
     rows = []
     for n in data:
-        rows.append([
-            _short_id(n.get("pm_need_id", "")),
-            n.get("pm_id", ""),
-            n.get("title", "")[:40],
-            n.get("category", ""),
-            n.get("urgency", ""),
-            n.get("status", ""),
-        ])
+        rows.append(
+            [
+                _short_id(n.get("pm_need_id", "")),
+                n.get("pm_id", ""),
+                n.get("title", "")[:40],
+                n.get("category", ""),
+                n.get("urgency", ""),
+                n.get("status", ""),
+            ]
+        )
     print(_table(headers, rows))
     print(f"\n{len(rows)} need(s) total")
 
@@ -245,11 +263,22 @@ def cmd_needs_show(args: argparse.Namespace) -> None:
     data = _get(f"/pm-needs/{args.need_id}")
     print(f"=== PM Need: {data.get('title', '')} ===\n")
     detail_keys = [
-        "pm_need_id", "pm_id", "title", "problem_statement",
-        "business_rationale", "requested_by", "date_raised",
-        "category", "urgency", "business_impact", "desired_by_date",
-        "status", "mapped_capability_id", "linked_project_ids",
-        "resolution_path", "notes",
+        "pm_need_id",
+        "pm_id",
+        "title",
+        "problem_statement",
+        "business_rationale",
+        "requested_by",
+        "date_raised",
+        "category",
+        "urgency",
+        "business_impact",
+        "desired_by_date",
+        "status",
+        "mapped_capability_id",
+        "linked_project_ids",
+        "resolution_path",
+        "notes",
     ]
     print(_kv(data, detail_keys))
 
@@ -302,15 +331,17 @@ def cmd_risks_list(args: argparse.Namespace) -> None:
                 age = f"{(date.today() - opened).days}d"
             except ValueError:
                 age = "?"
-        rows.append([
-            _short_id(r.get("risk_id", "")),
-            r.get("title", "")[:40],
-            r.get("risk_type", ""),
-            r.get("severity", ""),
-            r.get("status", ""),
-            r.get("date_opened") or "-",
-            age,
-        ])
+        rows.append(
+            [
+                _short_id(r.get("risk_id", "")),
+                r.get("title", "")[:40],
+                r.get("risk_type", ""),
+                r.get("severity", ""),
+                r.get("status", ""),
+                r.get("date_opened") or "-",
+                age,
+            ]
+        )
     print(_table(headers, rows))
     print(f"\n{len(rows)} risk(s) total")
 
@@ -349,13 +380,15 @@ def cmd_decisions_list(args: argparse.Namespace) -> None:
     headers = ["Decision ID", "Title", "Status", "Date", "Chosen Path"]
     rows = []
     for d in data:
-        rows.append([
-            _short_id(d.get("decision_id", "")),
-            d.get("title", "")[:40],
-            d.get("status", ""),
-            d.get("decision_date") or "-",
-            (d.get("chosen_path") or "-")[:30],
-        ])
+        rows.append(
+            [
+                _short_id(d.get("decision_id", "")),
+                d.get("title", "")[:40],
+                d.get("status", ""),
+                d.get("decision_date") or "-",
+                (d.get("chosen_path") or "-")[:30],
+            ]
+        )
     print(_table(headers, rows))
     print(f"\n{len(rows)} decision(s) total")
 
@@ -410,13 +443,15 @@ def cmd_report_weekly(args: argparse.Namespace) -> None:
         rows = []
         for p in pms:
             pm = p.get("pm", {})
-            rows.append([
-                pm.get("pm_name", ""),
-                pm.get("health_status", ""),
-                ", ".join(p.get("reasons", [])),
-                str(len(p.get("open_blockers", []))),
-                str(p.get("open_need_count", 0)),
-            ])
+            rows.append(
+                [
+                    pm.get("pm_name", ""),
+                    pm.get("health_status", ""),
+                    ", ".join(p.get("reasons", [])),
+                    str(len(p.get("open_blockers", []))),
+                    str(p.get("open_need_count", 0)),
+                ]
+            )
         print(_table(headers, rows))
     else:
         print("  (none)")
@@ -428,12 +463,14 @@ def cmd_report_weekly(args: argparse.Namespace) -> None:
         headers = ["Title", "Target Date", "Status", "Confidence"]
         rows = []
         for m in milestones:
-            rows.append([
-                m.get("title", "")[:40],
-                m.get("target_date") or "-",
-                m.get("status", ""),
-                m.get("confidence", ""),
-            ])
+            rows.append(
+                [
+                    m.get("title", "")[:40],
+                    m.get("target_date") or "-",
+                    m.get("status", ""),
+                    m.get("confidence", ""),
+                ]
+            )
         print(_table(headers, rows))
     else:
         print("  (none)")
@@ -445,12 +482,14 @@ def cmd_report_weekly(args: argparse.Namespace) -> None:
         headers = ["Risk ID", "Title", "Severity", "Opened"]
         rows = []
         for b in blockers:
-            rows.append([
-                _short_id(b.get("risk_id", "")),
-                b.get("title", "")[:40],
-                b.get("severity", ""),
-                b.get("date_opened") or "-",
-            ])
+            rows.append(
+                [
+                    _short_id(b.get("risk_id", "")),
+                    b.get("title", "")[:40],
+                    b.get("severity", ""),
+                    b.get("date_opened") or "-",
+                ]
+            )
         print(_table(headers, rows))
     else:
         print("  (none)")
@@ -462,11 +501,13 @@ def cmd_report_weekly(args: argparse.Namespace) -> None:
         headers = ["Decision ID", "Title", "Created"]
         rows = []
         for d in decisions:
-            rows.append([
-                _short_id(d.get("decision_id", "")),
-                d.get("title", "")[:40],
-                d.get("created_at") or "-",
-            ])
+            rows.append(
+                [
+                    _short_id(d.get("decision_id", "")),
+                    d.get("title", "")[:40],
+                    d.get("created_at") or "-",
+                ]
+            )
         print(_table(headers, rows))
     else:
         print("  (none)")
@@ -478,12 +519,14 @@ def cmd_report_weekly(args: argparse.Namespace) -> None:
         headers = ["Project ID", "Name", "Status", "Health"]
         rows = []
         for p in projects:
-            rows.append([
-                _short_id(p.get("project_id", "")),
-                p.get("name", "")[:40],
-                p.get("status", ""),
-                p.get("health_status", ""),
-            ])
+            rows.append(
+                [
+                    _short_id(p.get("project_id", "")),
+                    p.get("name", "")[:40],
+                    p.get("status", ""),
+                    p.get("health_status", ""),
+                ]
+            )
         print(_table(headers, rows))
     else:
         print("  (none)")
@@ -501,11 +544,13 @@ def cmd_report_portfolio(args: argparse.Namespace) -> None:
         rows = []
         for p in pms:
             pm = p.get("pm", {})
-            rows.append([
-                pm.get("pm_name", ""),
-                pm.get("health_status", ""),
-                ", ".join(p.get("reasons", [])),
-            ])
+            rows.append(
+                [
+                    pm.get("pm_name", ""),
+                    pm.get("health_status", ""),
+                    ", ".join(p.get("reasons", [])),
+                ]
+            )
         print(_table(headers, rows))
     else:
         print("  (none)")
@@ -535,11 +580,13 @@ def cmd_report_portfolio(args: argparse.Namespace) -> None:
         headers = ["Title", "Target Date", "Status"]
         rows = []
         for m in milestones:
-            rows.append([
-                m.get("title", "")[:40],
-                m.get("target_date") or "-",
-                m.get("status", ""),
-            ])
+            rows.append(
+                [
+                    m.get("title", "")[:40],
+                    m.get("target_date") or "-",
+                    m.get("status", ""),
+                ]
+            )
         print(_table(headers, rows))
     else:
         print("  (none)")
@@ -627,11 +674,18 @@ def build_parser() -> argparse.ArgumentParser:
     needs_list = needs_sub.add_parser("list", help="List PM needs")
     needs_list.add_argument("--pm", default=None, help="Filter by PM ID")
     needs_list.add_argument(
-        "--status", default=None,
+        "--status",
+        default=None,
         choices=[
-            "new", "triaged", "mapped_to_existing_capability",
-            "needs_new_project", "in_progress", "blocked",
-            "delivered", "deferred", "cancelled",
+            "new",
+            "triaged",
+            "mapped_to_existing_capability",
+            "needs_new_project",
+            "in_progress",
+            "blocked",
+            "delivered",
+            "deferred",
+            "cancelled",
         ],
         help="Filter by need status",
     )
@@ -643,15 +697,24 @@ def build_parser() -> argparse.ArgumentParser:
     needs_add.add_argument("pm_id", help="PM identifier")
     needs_add.add_argument("title", help="Short title for the need")
     needs_add.add_argument(
-        "--category", required=True,
+        "--category",
+        required=True,
         choices=[
-            "market_data", "historical_data", "alt_data", "execution",
-            "broker", "infra", "research", "ops", "other",
+            "market_data",
+            "historical_data",
+            "alt_data",
+            "execution",
+            "broker",
+            "infra",
+            "research",
+            "ops",
+            "other",
         ],
         help="Need category",
     )
     needs_add.add_argument(
-        "--urgency", default="this_month",
+        "--urgency",
+        default="this_month",
         choices=["immediate", "this_week", "this_month", "next_quarter", "backlog"],
         help="Urgency level (default: this_month)",
     )
@@ -662,24 +725,29 @@ def build_parser() -> argparse.ArgumentParser:
 
     risks_list = risks_sub.add_parser("list", help="List risks and blockers")
     risks_list.add_argument(
-        "--severity", default=None,
+        "--severity",
+        default=None,
         choices=["critical", "high", "medium", "low"],
         help="Filter by severity",
     )
     risks_list.add_argument(
-        "--open-only", action="store_true", default=False,
+        "--open-only",
+        action="store_true",
+        default=False,
         help="Show only open risks",
     )
 
     risks_add = risks_sub.add_parser("add", help="Create a new risk/blocker")
     risks_add.add_argument("title", help="Risk title")
     risks_add.add_argument(
-        "--severity", required=True,
+        "--severity",
+        required=True,
         choices=["critical", "high", "medium", "low"],
         help="Risk severity",
     )
     risks_add.add_argument(
-        "--type", required=True,
+        "--type",
+        required=True,
         choices=["risk", "blocker", "issue"],
         help="Risk type",
     )
@@ -690,7 +758,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     dec_list = dec_sub.add_parser("list", help="List decisions")
     dec_list.add_argument(
-        "--pending-only", action="store_true", default=False,
+        "--pending-only",
+        action="store_true",
+        default=False,
         help="Show only pending decisions",
     )
 
