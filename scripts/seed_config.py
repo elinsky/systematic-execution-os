@@ -98,6 +98,11 @@ _SINGLETON_PROJECTS = [
             "Onboarding In Progress", "UAT", "Go Live Ready",
             "Live", "Stabilization", "Steady State",
         ],
+        # Custom field env suffixes to attach to this project
+        "custom_fields": [
+            "HEALTH", "REGION", "LAST_TOUCHPOINT", "ONBOARDING_STAGE",
+            "PRIORITY", "OWNER_GROUP",
+        ],
     },
     {
         "name": "PM Needs - BAM Systematic",
@@ -108,6 +113,11 @@ _SINGLETON_PROJECTS = [
             "Needs New Project", "In Progress", "Blocked",
             "Delivered", "Deferred", "Cancelled",
         ],
+        "custom_fields": [
+            "NEED_CATEGORY", "URGENCY", "BUSINESS_IMPACT", "NEED_STATUS",
+            "RESOLUTION_PATH", "PM_FIELD", "REQUESTED_BY", "LINKED_CAPABILITY",
+            "PRIORITY",
+        ],
     },
     {
         "name": "Risks & Blockers - BAM Systematic",
@@ -117,6 +127,10 @@ _SINGLETON_PROJECTS = [
             "Open - Critical", "Open - High", "Open - Medium",
             "Monitoring", "Resolved",
         ],
+        "custom_fields": [
+            "ITEM_TYPE", "SEVERITY", "ESCALATION_STATUS",
+            "IMPACTED_PMS", "IMPACTED_PROJECTS", "RESOLUTION_DATE_FIELD",
+        ],
     },
     {
         "name": "Decision Log - BAM Systematic",
@@ -124,6 +138,9 @@ _SINGLETON_PROJECTS = [
         "env_key": "ASANA_DECISION_LOG_PROJECT_GID",
         "sections": [
             "Pending Decisions", "Decisions Made", "Deferred", "Cancelled",
+        ],
+        "custom_fields": [
+            "DECISION_STATUS", "DECISION_DATE", "APPROVER", "IMPACTED_SCOPE",
         ],
     },
 ]
@@ -143,17 +160,16 @@ async def _find_or_create_custom_field(
     """Return GID of custom field with this name, creating if absent."""
     # List existing custom fields
     async for field in client.paginate(
-        "custom_fields",
-        params={"workspace": workspace_gid, "opt_fields": "gid,name,resource_subtype"},
+        f"workspaces/{workspace_gid}/custom_fields",
+        params={"opt_fields": "gid,name,resource_subtype"},
     ):
         if field.get("name") == name:
             print(f"  [reuse] custom field '{name}' → {field['gid']}")
             return field["gid"]
 
-    # Build create body
+    # Build create body (workspace is in the URL path, not the body)
     body: dict = {
         "name": name,
-        "workspace": workspace_gid,
         "resource_subtype": field_type,
     }
     if field_type == "enum" and options:
@@ -163,7 +179,7 @@ async def _find_or_create_custom_field(
     if field_type == "checkbox":
         body["resource_subtype"] = "checkbox"
 
-    result = await client.post("custom_fields", body)
+    result = await client.post(f"workspaces/{workspace_gid}/custom_fields", body)
     gid = result["gid"]
     print(f"  [create] custom field '{name}' → {gid}")
     return gid
@@ -178,9 +194,8 @@ async def _find_or_create_project(
 ) -> str:
     """Return GID of project with this name, creating if absent."""
     async for proj in client.paginate(
-        "projects",
+        f"workspaces/{workspace_gid}/projects",
         params={
-            "workspace": workspace_gid,
             "opt_fields": "gid,name,archived",
             "archived": "false",
         },
@@ -203,6 +218,40 @@ async def _find_or_create_project(
     return gid
 
 
+async def _ensure_custom_fields_attached(
+    client: AsanaClient,
+    project_gid: str,
+    field_gids: list[str],
+) -> None:
+    """Attach custom fields to a project if not already attached.
+
+    Asana requires fields to be attached via addCustomFieldSetting before
+    tasks in the project can use them.
+    """
+    # Fetch current custom field settings
+    existing_gids: set[str] = set()
+    async for cf in client.paginate(
+        f"projects/{project_gid}/custom_field_settings",
+        params={"opt_fields": "custom_field.gid"},
+    ):
+        gid = (cf.get("custom_field") or {}).get("gid")
+        if gid:
+            existing_gids.add(gid)
+
+    for field_gid in field_gids:
+        if field_gid in existing_gids:
+            print(f"    [reuse]  custom field {field_gid} already attached")
+        else:
+            try:
+                await client.post(
+                    f"projects/{project_gid}/addCustomFieldSetting",
+                    {"custom_field": field_gid, "is_important": False},
+                )
+                print(f"    [attach] custom field {field_gid}")
+            except Exception as e:
+                print(f"    [warn]   could not attach field {field_gid}: {e}")
+
+
 async def _ensure_sections(
     client: AsanaClient,
     project_gid: str,
@@ -221,7 +270,7 @@ async def _ensure_sections(
         if name not in existing:
             data = await client.post(
                 f"projects/{project_gid}/sections",
-                {"name": name, "project": project_gid},
+                {"name": name},
             )
             result[name] = data["gid"]
             print(f"    [create] section '{name}' → {data['gid']}")

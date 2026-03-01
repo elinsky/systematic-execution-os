@@ -214,11 +214,23 @@ class AsanaCRUD:
 
         This enables idempotent lookup: given a sidecar ID, fetch the matching
         Asana task without a DB query by searching external.id.
+
+        Note: the external field is only available on Asana workspaces using
+        app-based OAuth integrations. On PAT-only workspaces this will silently
+        no-op — the sidecar falls back to DB-based lookup in that case.
         """
-        await self._client.patch(
-            f"tasks/{task_gid}",
-            {"external": {"id": external_id}},
-        )
+        try:
+            await self._client.patch(
+                f"tasks/{task_gid}",
+                {"external": {"id": external_id}},
+            )
+        except Exception as exc:
+            logger.warning(
+                "asana_external_id_skipped",
+                task_gid=task_gid,
+                external_id=external_id,
+                reason=str(exc),
+            )
 
     async def add_task_dependency(
         self, task_gid: str, dependency_gid: str
@@ -533,7 +545,7 @@ class AsanaCRUD:
         ops = [
             {
                 "method": "POST",
-                "relative_url": f"/projects/{project_gid}/sections",
+                "relative_path": f"/projects/{project_gid}/sections",
                 "data": {"name": name, "project": project_gid},
             }
             for name in section_names[:10]
@@ -555,7 +567,7 @@ class AsanaCRUD:
         Returns list of created task dicts.
         """
         ops = [
-            {"method": "POST", "relative_url": "/tasks", "data": body}
+            {"method": "POST", "relative_path": "/tasks", "data": body}
             for body in task_bodies[:10]
         ]
         results = await self._client.batch(ops)

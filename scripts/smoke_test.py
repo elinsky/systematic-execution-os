@@ -221,12 +221,12 @@ async def test_pm_need(
         return None
 
     try:
-        need = await crud.create_pm_need(
+        need = await crud.create_pm_need_task(
             pm_need_id=pm_need_id,
             pm_id=f"smoke-pm-{run_id}",
             title=need_title,
             category=NeedCategory.EXECUTION,
-            urgency=Urgency.HIGH,
+            urgency=Urgency.THIS_WEEK,
             business_impact=BusinessImpact.HIGH,
             desired_by_date=date.today() + timedelta(days=30),
             notes="Smoke test: DMA connectivity need for broker X.",
