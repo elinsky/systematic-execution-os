@@ -51,8 +51,9 @@ class PMCoverageRecord(AsanaLinkedRecord):
 
     # Relational links (stored as ID lists; resolved at query time)
     linked_project_ids: list[str] = Field(default_factory=list)
-    top_open_need_ids: list[str] = Field(default_factory=list)
-    top_blocker_ids: list[str] = Field(default_factory=list)
+    # NOTE: top_open_need_ids and top_blocker_ids are computed on read
+    # from PMNeed and RiskBlocker tables filtered by pm_id, not stored here.
+    # See design-review.md P1 item #5.
 
 
 class PMCoverageCreate(PMCoverageRecord):

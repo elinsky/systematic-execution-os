@@ -89,7 +89,13 @@ class DecisionCreate(Decision):
 
 
 class DecisionResolve(SidecarBaseModel):
-    """Schema for recording the outcome of a pending decision."""
+    """Schema for recording the outcome of a pending decision.
+
+    Only pending decisions can be resolved. Once status is DECIDED,
+    the decision is immutable. To change a decided outcome, create a
+    new decision with status PENDING and set superseded_by_id on the
+    original. See design-review.md P0 item #3.
+    """
     decision_id: str
     chosen_path: str
     rationale: str

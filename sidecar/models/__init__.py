@@ -10,7 +10,7 @@ from .common import (
     Priority,
     Urgency,
     BusinessImpact,
-    SyncState,
+
 )
 from .pm_coverage import (
     OnboardingStage,
@@ -81,7 +81,7 @@ __all__ = [
     "Priority",
     "Urgency",
     "BusinessImpact",
-    "SyncState",
+
     # pm_coverage
     "OnboardingStage",
     "PMCoverageRecord",

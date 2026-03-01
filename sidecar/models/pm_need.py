@@ -85,10 +85,16 @@ class PMNeedCreate(PMNeed):
 
 
 class PMNeedUpdate(AsanaLinkedRecord):
-    """Schema for partial updates to a PM Need."""
+    """Schema for partial updates to a PM Need.
+
+    NOTE: `status` is NOT writable via the sidecar API. PM Need status is
+    driven by the Asana task's section (Kanban column). The sidecar's `status`
+    field is a read-only cache synced from Asana via webhook/poll.
+    See design-review.md P0 item #1.
+    """
 
     pm_need_id: str
-    status: Optional[NeedStatus] = None
+    # status intentionally excluded — Asana section is canonical
     urgency: Optional[Urgency] = None
     business_impact: Optional[BusinessImpact] = None
     mapped_capability_id: Optional[str] = None

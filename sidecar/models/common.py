@@ -57,28 +57,27 @@ class BusinessImpact(StrEnum):
     LOW = "low"
 
 
-class SyncState(StrEnum):
-    """Tracks the sidecar record's synchronization state with Asana."""
-    SYNCED = "synced"
-    PENDING_PUSH = "pending_push"
-    PENDING_PULL = "pending_pull"
-    CONFLICT = "conflict"
-    ASANA_DELETED = "asana_deleted"
-
-
 # ---------------------------------------------------------------------------
 # Shared base for records with Asana GID
 # ---------------------------------------------------------------------------
 
 class AsanaLinkedRecord(SidecarBaseModel):
-    """Base for sidecar records that mirror an Asana object."""
+    """Base for sidecar records that mirror an Asana object.
+
+    V1 uses asana_gid + asana_synced_at for sync tracking.
+    Full SyncState machine (pending_push/pull/conflict) deferred to v2.
+    See design-review.md P3 recommendation.
+    """
 
     asana_gid: Optional[str] = Field(
         default=None,
         description="Asana global ID for the mirrored object. "
                     "Non-nullable once synced; None only before first Asana write.",
     )
-    sync_state: SyncState = SyncState.PENDING_PUSH
+    asana_synced_at: Optional[datetime] = Field(
+        default=None,
+        description="Timestamp of last successful sync with Asana.",
+    )
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     archived_at: Optional[datetime] = None
