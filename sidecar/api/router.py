@@ -8,14 +8,14 @@ router = APIRouter()
 # Stubs are registered now so the app boots cleanly.
 
 from sidecar.api import (  # noqa: E402
+    capabilities,
+    decisions,
+    milestones,
+    operating_review,
     pm_coverage,
     pm_needs,
     projects,
-    milestones,
     risks,
-    decisions,
-    capabilities,
-    operating_review,
 )
 
 router.include_router(pm_coverage.router, prefix="/pm-coverage", tags=["pm-coverage"])

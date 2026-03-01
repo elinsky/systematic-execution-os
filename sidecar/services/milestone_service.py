@@ -5,15 +5,11 @@ Source of truth: Asana. Sidecar stores GID + confidence/acceptance enrichment.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import structlog
 
 from sidecar.models.milestone import (
     Milestone,
-    MilestoneConfidence,
     MilestoneCreate,
-    MilestoneStatus,
     MilestoneUpdate,
 )
 from sidecar.persistence.milestone import MilestoneRepository
@@ -25,7 +21,7 @@ class MilestoneService:
     def __init__(self, repo: MilestoneRepository) -> None:
         self._repo = repo
 
-    async def get(self, milestone_id: str) -> Optional[Milestone]:
+    async def get(self, milestone_id: str) -> Milestone | None:
         return await self._repo.get(milestone_id)
 
     async def list_for_project(self, project_id: str) -> list[Milestone]:
@@ -53,7 +49,6 @@ class MilestoneService:
         """Return milestones that have no acceptance criteria — a data quality signal."""
         at_risk = await self._repo.list_at_risk()
         # Also check not-started and in-progress milestones
-        all_milestones: list[Milestone] = []
         # We query at_risk for now; a broader query would require a new repo method
         # For v1, surface milestones that are AT_RISK or near without criteria
         return [m for m in at_risk if not m.acceptance_criteria]

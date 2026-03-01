@@ -9,13 +9,13 @@ GET /operating-review/milestone-calendar Upcoming milestones across all projects
 from __future__ import annotations
 
 from datetime import date, timedelta
-from typing import Optional
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
 from sidecar.api.deps import get_milestone_repo, get_operating_review_service, get_pm_need_repo
 from sidecar.models.milestone import Milestone
-from sidecar.models.pm_need import NeedCategory, NeedStatus
+from sidecar.models.pm_need import NeedStatus
 from sidecar.persistence.milestone import MilestoneRepository
 from sidecar.persistence.pm_need import PMNeedRepository
 from sidecar.services.operating_review_service import (
@@ -23,7 +23,6 @@ from sidecar.services.operating_review_service import (
     OperatingReviewService,
     PMAtRisk,
 )
-from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -93,9 +92,6 @@ async def get_milestone_calendar(
     """Upcoming milestones across all active projects, sorted by target_date."""
     cutoff = date.today() + timedelta(days=days_ahead)
     at_risk = await milestone_repo.list_at_risk()
-    upcoming = [
-        m for m in at_risk
-        if m.target_date and date.today() <= m.target_date <= cutoff
-    ]
+    upcoming = [m for m in at_risk if m.target_date and date.today() <= m.target_date <= cutoff]
     upcoming.sort(key=lambda m: m.target_date)  # type: ignore[arg-type]
     return upcoming

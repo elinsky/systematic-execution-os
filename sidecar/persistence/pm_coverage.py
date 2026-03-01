@@ -6,15 +6,19 @@ Provides async CRUD + filtered list queries.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sidecar.db.pm_coverage import PMCoverageTable
-from sidecar.models.pm_coverage import OnboardingStage, PMCoverageCreate, PMCoverageRecord, PMCoverageUpdate
 from sidecar.models.common import HealthStatus
+from sidecar.models.pm_coverage import (
+    OnboardingStage,
+    PMCoverageCreate,
+    PMCoverageRecord,
+    PMCoverageUpdate,
+)
 from sidecar.persistence.base import decode_list, encode_list
 
 
@@ -44,14 +48,14 @@ class PMCoverageRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get(self, pm_id: str) -> Optional[PMCoverageRecord]:
+    async def get(self, pm_id: str) -> PMCoverageRecord | None:
         result = await self._session.execute(
             select(PMCoverageTable).where(PMCoverageTable.pm_id == pm_id)
         )
         row = result.scalar_one_or_none()
         return _row_to_model(row) if row else None
 
-    async def get_by_asana_gid(self, asana_gid: str) -> Optional[PMCoverageRecord]:
+    async def get_by_asana_gid(self, asana_gid: str) -> PMCoverageRecord | None:
         result = await self._session.execute(
             select(PMCoverageTable).where(PMCoverageTable.asana_gid == asana_gid)
         )
@@ -60,8 +64,8 @@ class PMCoverageRepository:
 
     async def list(
         self,
-        stage: Optional[OnboardingStage] = None,
-        health: Optional[HealthStatus] = None,
+        stage: OnboardingStage | None = None,
+        health: HealthStatus | None = None,
         include_archived: bool = False,
     ) -> list[PMCoverageRecord]:
         stmt = select(PMCoverageTable)
@@ -96,7 +100,7 @@ class PMCoverageRepository:
         await self._session.refresh(row)
         return _row_to_model(row)
 
-    async def update(self, data: PMCoverageUpdate) -> Optional[PMCoverageRecord]:
+    async def update(self, data: PMCoverageUpdate) -> PMCoverageRecord | None:
         result = await self._session.execute(
             select(PMCoverageTable).where(PMCoverageTable.pm_id == data.pm_id)
         )
@@ -130,7 +134,7 @@ class PMCoverageRepository:
         row = result.scalar_one_or_none()
         if row is None:
             return False
-        row.archived_at = datetime.now(timezone.utc)
+        row.archived_at = datetime.now(UTC)
         await self._session.flush()
         return True
 

@@ -6,7 +6,7 @@ Sidecar reads and stores status update metadata for rollup views.
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Optional
+
 from pydantic import Field
 
 from .common import AsanaLinkedRecord, HealthStatus
@@ -29,10 +29,10 @@ class StatusUpdate(AsanaLinkedRecord):
     scope_type: StatusScopeType
     scope_id: str = Field(description="ID of the PM, project, or initiative this covers")
     overall_status: HealthStatus = HealthStatus.UNKNOWN
-    what_changed_this_period: Optional[str] = None
-    next_key_milestones: Optional[str] = None
-    top_blockers: Optional[str] = None
-    decisions_needed: Optional[str] = None
-    confidence: Optional[str] = None
-    updated_by: Optional[str] = None
-    updated_at: Optional[datetime] = None
+    what_changed_this_period: str | None = None
+    next_key_milestones: str | None = None
+    top_blockers: str | None = None
+    decisions_needed: str | None = None
+    confidence: str | None = None
+    updated_by: str | None = None
+    updated_at: datetime | None = None

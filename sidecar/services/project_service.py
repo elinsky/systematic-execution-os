@@ -6,8 +6,6 @@ Projects are created/updated via Asana; sidecar records are upserted by sync.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import structlog
 
 from sidecar.models.common import HealthStatus
@@ -21,14 +19,14 @@ class ProjectService:
     def __init__(self, repo: ProjectRepository) -> None:
         self._repo = repo
 
-    async def get(self, project_id: str) -> Optional[Project]:
+    async def get(self, project_id: str) -> Project | None:
         return await self._repo.get(project_id)
 
     async def list(
         self,
-        pm_id: Optional[str] = None,
-        health: Optional[HealthStatus] = None,
-        status: Optional[ProjectStatus] = None,
+        pm_id: str | None = None,
+        health: HealthStatus | None = None,
+        status: ProjectStatus | None = None,
     ) -> list[Project]:
         return await self._repo.list(pm_id=pm_id, health=health, status=status)
 

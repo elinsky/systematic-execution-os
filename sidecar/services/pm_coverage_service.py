@@ -6,8 +6,6 @@ This service owns all CRUD and business logic for PM records.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import structlog
 
 from sidecar.models.common import HealthStatus
@@ -32,13 +30,13 @@ class PMCoverageService:
     def __init__(self, repo: PMCoverageRepository) -> None:
         self._repo = repo
 
-    async def get(self, pm_id: str) -> Optional[PMCoverageRecord]:
+    async def get(self, pm_id: str) -> PMCoverageRecord | None:
         return await self._repo.get(pm_id)
 
     async def list(
         self,
-        stage: Optional[OnboardingStage] = None,
-        health: Optional[HealthStatus] = None,
+        stage: OnboardingStage | None = None,
+        health: HealthStatus | None = None,
     ) -> list[PMCoverageRecord]:
         return await self._repo.list(stage=stage, health=health)
 

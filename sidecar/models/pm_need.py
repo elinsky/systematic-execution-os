@@ -7,10 +7,10 @@ Source of truth: Hybrid.
 
 from datetime import date
 from enum import StrEnum
-from typing import Optional
+
 from pydantic import Field
 
-from .common import AsanaLinkedRecord, Urgency, BusinessImpact
+from .common import AsanaLinkedRecord, BusinessImpact, Urgency
 
 
 class NeedCategory(StrEnum):
@@ -48,29 +48,29 @@ class PMNeed(AsanaLinkedRecord):
     pm_id: str = Field(description="FK to PMCoverageRecord.pm_id")
     title: str = Field(
         description="Short, clear statement of the need. "
-                    "Should follow naming convention: '[PM] - [Category] - [Short Need]'",
+        "Should follow naming convention: '[PM] - [Category] - [Short Need]'",
     )
-    problem_statement: Optional[str] = None
-    business_rationale: Optional[str] = None
+    problem_statement: str | None = None
+    business_rationale: str | None = None
     requested_by: str = Field(description="Name of PM or leadership contact who raised this")
     date_raised: date
     category: NeedCategory
     urgency: Urgency = Urgency.THIS_MONTH
     business_impact: BusinessImpact = BusinessImpact.MEDIUM
-    desired_by_date: Optional[date] = None
+    desired_by_date: date | None = None
     status: NeedStatus = NeedStatus.NEW
 
     # Routing / resolution
-    mapped_capability_id: Optional[str] = Field(
+    mapped_capability_id: str | None = Field(
         default=None,
         description="FK to Capability.capability_id if this need maps to an existing capability",
     )
     linked_project_ids: list[str] = Field(default_factory=list)
-    resolution_path: Optional[str] = Field(
+    resolution_path: str | None = Field(
         default=None,
         description="Free-text description of how this need will be or was resolved",
     )
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class PMNeedCreate(PMNeed):
@@ -95,9 +95,9 @@ class PMNeedUpdate(AsanaLinkedRecord):
 
     pm_need_id: str
     # status intentionally excluded — Asana section is canonical
-    urgency: Optional[Urgency] = None
-    business_impact: Optional[BusinessImpact] = None
-    mapped_capability_id: Optional[str] = None
-    linked_project_ids: Optional[list[str]] = None
-    resolution_path: Optional[str] = None
-    notes: Optional[str] = None
+    urgency: Urgency | None = None
+    business_impact: BusinessImpact | None = None
+    mapped_capability_id: str | None = None
+    linked_project_ids: list[str] | None = None
+    resolution_path: str | None = None
+    notes: str | None = None

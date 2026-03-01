@@ -5,8 +5,6 @@ Source of truth: Hybrid (Asana task + sidecar severity/impact metadata).
 
 from __future__ import annotations
 
-from typing import Optional
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -50,14 +48,12 @@ class RiskRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get(self, risk_id: str) -> Optional[RiskBlocker]:
-        result = await self._session.execute(
-            select(RiskTable).where(RiskTable.risk_id == risk_id)
-        )
+    async def get(self, risk_id: str) -> RiskBlocker | None:
+        result = await self._session.execute(select(RiskTable).where(RiskTable.risk_id == risk_id))
         row = result.scalar_one_or_none()
         return _row_to_model(row) if row else None
 
-    async def get_by_asana_gid(self, asana_gid: str) -> Optional[RiskBlocker]:
+    async def get_by_asana_gid(self, asana_gid: str) -> RiskBlocker | None:
         result = await self._session.execute(
             select(RiskTable).where(RiskTable.asana_gid == asana_gid)
         )
@@ -66,9 +62,9 @@ class RiskRepository:
 
     async def list(
         self,
-        pm_id: Optional[str] = None,
-        severity: Optional[RiskSeverity] = None,
-        status: Optional[RiskStatus] = None,
+        pm_id: str | None = None,
+        severity: RiskSeverity | None = None,
+        status: RiskStatus | None = None,
         open_only: bool = False,
     ) -> list[RiskBlocker]:
         stmt = select(RiskTable)
@@ -114,7 +110,7 @@ class RiskRepository:
         await self._session.refresh(row)
         return _row_to_model(row)
 
-    async def update(self, data: RiskUpdate) -> Optional[RiskBlocker]:
+    async def update(self, data: RiskUpdate) -> RiskBlocker | None:
         result = await self._session.execute(
             select(RiskTable).where(RiskTable.risk_id == data.risk_id)
         )

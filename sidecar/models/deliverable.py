@@ -6,7 +6,7 @@ Sidecar tracks asana_gid reference only; does not replicate task body or comment
 
 from datetime import date, datetime
 from enum import StrEnum
-from typing import Optional
+
 from pydantic import Field
 
 from .common import AsanaLinkedRecord
@@ -30,10 +30,10 @@ class Deliverable(AsanaLinkedRecord):
     deliverable_id: str = Field(description="Internal sidecar identifier")
     project_id: str = Field(description="FK to Project.project_id")
     title: str
-    owner: Optional[str] = None
-    due_date: Optional[date] = None
+    owner: str | None = None
+    due_date: date | None = None
     status: DeliverableStatus = DeliverableStatus.NOT_STARTED
-    related_milestone_id: Optional[str] = Field(
+    related_milestone_id: str | None = Field(
         default=None,
         description="FK to Milestone.milestone_id if this deliverable gates a milestone",
     )
@@ -41,8 +41,8 @@ class Deliverable(AsanaLinkedRecord):
         default_factory=list,
         description="List of deliverable_ids this item is waiting on",
     )
-    last_updated: Optional[datetime] = None
-    notes: Optional[str] = None
+    last_updated: datetime | None = None
+    notes: str | None = None
 
 
 class DeliverableCreate(Deliverable):
@@ -53,7 +53,7 @@ class DeliverableCreate(Deliverable):
 
 class DeliverableUpdate(AsanaLinkedRecord):
     deliverable_id: str
-    status: Optional[DeliverableStatus] = None
-    owner: Optional[str] = None
-    due_date: Optional[date] = None
-    notes: Optional[str] = None
+    status: DeliverableStatus | None = None
+    owner: str | None = None
+    due_date: date | None = None
+    notes: str | None = None

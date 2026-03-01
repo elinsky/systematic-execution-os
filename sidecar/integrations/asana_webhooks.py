@@ -25,7 +25,7 @@ from typing import Any
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sidecar.integrations.asana.client import AsanaClient, AsanaNotFoundError, TASK_OPT_FIELDS
+from sidecar.integrations.asana.client import TASK_OPT_FIELDS, AsanaClient, AsanaNotFoundError
 from sidecar.integrations.asana.mapper import AsanaFieldConfig
 from sidecar.integrations.asana.webhooks import AsanaWebhookHandler
 from sidecar.integrations.asana_sync import (
@@ -112,9 +112,7 @@ async def _sync_task_from_event(
 
     async with session_factory() as session:
         try:
-            result = await _upsert_entity(
-                entity_type, task, task_gid, field_cfg, session
-            )
+            result = await _upsert_entity(entity_type, task, task_gid, field_cfg, session)
             await session.commit()
             return result
         except Exception as exc:

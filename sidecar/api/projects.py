@@ -8,9 +8,8 @@ PATCH /projects/{project_id}  Update project status or health
 
 from __future__ import annotations
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 
 from sidecar.api.deps import (
     get_decision_repo,
@@ -27,7 +26,6 @@ from sidecar.persistence.decision import DecisionRepository
 from sidecar.persistence.milestone import MilestoneRepository
 from sidecar.persistence.risk import RiskRepository
 from sidecar.services.project_service import ProjectService
-from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -45,10 +43,10 @@ class ProjectDetail(BaseModel):
 
 @router.get("", response_model=list[Project])
 async def list_projects(
-    pm_id: Optional[str] = None,
-    project_status: Optional[ProjectStatus] = None,
-    health: Optional[HealthStatus] = None,
-    project_type: Optional[ProjectType] = None,
+    pm_id: str | None = None,
+    project_status: ProjectStatus | None = None,
+    health: HealthStatus | None = None,
+    project_type: ProjectType | None = None,
     at_risk_only: bool = False,
     svc: ProjectService = Depends(get_project_service),
 ) -> list[Project]:
@@ -111,4 +109,4 @@ async def update_project(
     try:
         return await svc.update(data)
     except KeyError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

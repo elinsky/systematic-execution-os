@@ -8,7 +8,7 @@ This preserves rationale and prevents repeated re-litigation of resolved choices
 
 from datetime import date
 from enum import StrEnum
-from typing import Optional
+
 from pydantic import Field
 
 from .common import SidecarBaseModel
@@ -23,6 +23,7 @@ class DecisionStatus(StrEnum):
 
 class ArtifactType(StrEnum):
     """Types of artifacts that a decision can impact."""
+
     PM = "pm"
     PROJECT = "project"
     MILESTONE = "milestone"
@@ -34,7 +35,7 @@ class ArtifactType(StrEnum):
 class ImpactedArtifact(SidecarBaseModel):
     artifact_type: ArtifactType
     artifact_id: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class Decision(SidecarBaseModel):
@@ -52,19 +53,19 @@ class Decision(SidecarBaseModel):
 
     decision_id: str = Field(description="Internal sidecar identifier")
     title: str
-    context: Optional[str] = Field(
+    context: str | None = Field(
         default=None,
         description="Background and situation that required this decision",
     )
-    options_considered: Optional[str] = Field(
+    options_considered: str | None = Field(
         default=None,
         description="Description of alternatives evaluated",
     )
-    chosen_path: Optional[str] = Field(
+    chosen_path: str | None = Field(
         default=None,
         description="The selected option",
     )
-    rationale: Optional[str] = Field(
+    rationale: str | None = Field(
         default=None,
         description="Why this option was chosen over alternatives",
     )
@@ -72,15 +73,15 @@ class Decision(SidecarBaseModel):
         default_factory=list,
         description="Names/IDs of decision approvers",
     )
-    decision_date: Optional[date] = None
+    decision_date: date | None = None
     status: DecisionStatus = DecisionStatus.PENDING
-    superseded_by_id: Optional[str] = Field(
+    superseded_by_id: str | None = Field(
         default=None,
         description="decision_id of the decision that supersedes this one",
     )
     impacted_artifacts: list[ImpactedArtifact] = Field(default_factory=list)
-    created_at: Optional[date] = None
-    notes: Optional[str] = None
+    created_at: date | None = None
+    notes: str | None = None
 
 
 class DecisionCreate(Decision):
@@ -96,6 +97,7 @@ class DecisionResolve(SidecarBaseModel):
     new decision with status PENDING and set superseded_by_id on the
     original. See design-review.md P0 item #3.
     """
+
     decision_id: str
     chosen_path: str
     rationale: str

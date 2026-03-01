@@ -7,11 +7,8 @@ Status is read-only from the API (D1) — only synced from Asana.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import structlog
 
-from sidecar.models.common import BusinessImpact, Urgency
 from sidecar.models.pm_need import NeedCategory, NeedStatus, PMNeed, PMNeedCreate, PMNeedUpdate
 from sidecar.persistence.pm_need import PMNeedRepository
 
@@ -22,14 +19,14 @@ class PMNeedService:
     def __init__(self, repo: PMNeedRepository) -> None:
         self._repo = repo
 
-    async def get(self, need_id: str) -> Optional[PMNeed]:
+    async def get(self, need_id: str) -> PMNeed | None:
         return await self._repo.get(need_id)
 
     async def list(
         self,
-        pm_id: Optional[str] = None,
-        status: Optional[NeedStatus] = None,
-        category: Optional[NeedCategory] = None,
+        pm_id: str | None = None,
+        status: NeedStatus | None = None,
+        category: NeedCategory | None = None,
     ) -> list[PMNeed]:
         return await self._repo.list(pm_id=pm_id, status=status, category=category)
 

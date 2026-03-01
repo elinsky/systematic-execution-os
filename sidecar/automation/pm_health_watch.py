@@ -15,7 +15,7 @@ Alert log events:
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 import structlog
@@ -51,22 +51,18 @@ async def run_pm_health_watch(
     return alerts
 
 
-async def _check_pm_health(
-    session: AsyncSession, settings: Settings
-) -> dict[str, Any]:
+async def _check_pm_health(session: AsyncSession, settings: Settings) -> dict[str, Any]:
     today = date.today()
 
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "pms_with_too_many_needs": await _check_pm_open_needs(session, settings),
         "aging_blockers": await _check_aging_blockers(session, today, settings),
         "critical_aging_blockers": await _check_critical_blockers(session, today),
     }
 
 
-async def _check_pm_open_needs(
-    session: AsyncSession, settings: Settings
-) -> list[dict[str, Any]]:
+async def _check_pm_open_needs(session: AsyncSession, settings: Settings) -> list[dict[str, Any]]:
     """Find PMs with >= pm_open_needs_alert_count unresolved needs."""
     pm_result = await session.execute(
         select(PMCoverageTable).where(
@@ -95,17 +91,19 @@ async def _check_pm_open_needs(
                 open_needs_count=count,
                 threshold=settings.pm_open_needs_alert_count,
             )
-            flagged.append({
-                "pm_id": pm.pm_id,
-                "pm_name": pm.pm_name,
-                "onboarding_stage": pm.onboarding_stage,
-                "open_needs_count": count,
-                "threshold": settings.pm_open_needs_alert_count,
-                "top_needs": [
-                    {"need_id": n.need_id, "title": n.title, "urgency": n.urgency}
-                    for n in open_needs[:5]
-                ],
-            })
+            flagged.append(
+                {
+                    "pm_id": pm.pm_id,
+                    "pm_name": pm.pm_name,
+                    "onboarding_stage": pm.onboarding_stage,
+                    "open_needs_count": count,
+                    "threshold": settings.pm_open_needs_alert_count,
+                    "top_needs": [
+                        {"need_id": n.need_id, "title": n.title, "urgency": n.urgency}
+                        for n in open_needs[:5]
+                    ],
+                }
+            )
 
     return flagged
 
@@ -136,22 +134,22 @@ async def _check_aging_blockers(
             age_days=age,
             threshold=settings.blocker_age_alert_days,
         )
-        alerts.append({
-            "risk_id": r.risk_id,
-            "title": r.title,
-            "severity": r.severity,
-            "escalation_status": r.escalation_status,
-            "owner": r.owner,
-            "age_days": age,
-            "threshold_days": settings.blocker_age_alert_days,
-        })
+        alerts.append(
+            {
+                "risk_id": r.risk_id,
+                "title": r.title,
+                "severity": r.severity,
+                "escalation_status": r.escalation_status,
+                "owner": r.owner,
+                "age_days": age,
+                "threshold_days": settings.blocker_age_alert_days,
+            }
+        )
 
     return alerts
 
 
-async def _check_critical_blockers(
-    session: AsyncSession, today: date
-) -> list[dict[str, Any]]:
+async def _check_critical_blockers(session: AsyncSession, today: date) -> list[dict[str, Any]]:
     """Find critical blockers open > 3 days — escalate faster than standard threshold."""
     cutoff = today - timedelta(days=_CRITICAL_BLOCKER_AGE_DAYS)
 
@@ -175,13 +173,15 @@ async def _check_critical_blockers(
             age_days=age,
             escalation_status=r.escalation_status,
         )
-        alerts.append({
-            "risk_id": r.risk_id,
-            "title": r.title,
-            "severity": "critical",
-            "escalation_status": r.escalation_status,
-            "owner": r.owner,
-            "age_days": age,
-        })
+        alerts.append(
+            {
+                "risk_id": r.risk_id,
+                "title": r.title,
+                "severity": "critical",
+                "escalation_status": r.escalation_status,
+                "owner": r.owner,
+                "age_days": age,
+            }
+        )
 
     return alerts

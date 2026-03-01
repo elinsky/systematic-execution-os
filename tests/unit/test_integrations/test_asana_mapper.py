@@ -372,7 +372,10 @@ class TestFromAsanaRisk:
 # ---------------------------------------------------------------------------
 
 class TestToAsanaPayloads:
-    def test_to_asana_pm_need_includes_custom_fields(self, mapper: AsanaMapper):
+    def test_to_asana_pm_need_excludes_custom_fields(self, mapper: AsanaMapper):
+        """Custom fields are not included in creation payloads because Asana
+        enum custom fields require option GIDs (not string values). Custom
+        fields are populated via pull-sync from Asana."""
         body = mapper.to_asana_pm_need(
             title="Jane Doe - Market Data - Bloomberg Access",
             category=NeedCategory.MARKET_DATA,
@@ -386,10 +389,7 @@ class TestToAsanaPayloads:
         assert body["projects"] == ["proj-needs-gid"]
         assert body["due_on"] == "2026-04-15"
         assert body["notes"] == "Need Bloomberg terminal access."
-        cf = body["custom_fields"]
-        assert cf["gid-category"] == "market_data"
-        assert cf["gid-urgency"] == "this_week"
-        assert cf["gid-impact"] == "high"
+        assert "custom_fields" not in body
 
     def test_to_asana_pm_need_omits_none_fields(self, mapper: AsanaMapper):
         body = mapper.to_asana_pm_need(
@@ -423,10 +423,14 @@ class TestToAsanaPayloads:
         )
         assert body["workspace"] == "workspace-abc"
         assert body["due_on"] == "2026-06-30"
-        cf = body.get("custom_fields", {})
-        assert cf.get("gid-proj-type") == "pm_onboarding"
+        # Custom fields are not set at project creation time; they are
+        # populated via pull-sync from Asana.
+        assert "custom_fields" not in body
 
-    def test_to_asana_risk_includes_severity(self, mapper: AsanaMapper):
+    def test_to_asana_risk_excludes_custom_fields(self, mapper: AsanaMapper):
+        """Custom fields are not included in creation payloads because Asana
+        enum custom fields require option GIDs (not string values). Custom
+        fields are populated via pull-sync from Asana."""
         body = mapper.to_asana_risk(
             title="PM Jane - Data Feed Delayed",
             risk_type=RiskType.BLOCKER,
@@ -435,10 +439,8 @@ class TestToAsanaPayloads:
             mitigation_plan="Escalate to tech lead.",
         )
         assert body["name"] == "PM Jane - Data Feed Delayed"
-        cf = body["custom_fields"]
-        assert cf["gid-risk-type"] == "blocker"
-        assert cf["gid-severity"] == "critical"
         assert body["notes"] == "Escalate to tech lead."
+        assert "custom_fields" not in body
 
 
 # ---------------------------------------------------------------------------

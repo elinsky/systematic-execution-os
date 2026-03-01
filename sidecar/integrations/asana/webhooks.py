@@ -20,7 +20,8 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-from typing import Any, Callable, Awaitable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 import structlog
 
@@ -43,16 +44,18 @@ RESOURCE_SECTION = "section"
 RESOURCE_STORY = "story"
 
 # Fields we care about for task changes — ignore noise like num_likes, stories
-RELEVANT_TASK_FIELDS = frozenset({
-    "name",
-    "assignee",
-    "due_on",
-    "completed",
-    "custom_fields",
-    "memberships",   # section changes
-    "dependencies",
-    "notes",
-})
+RELEVANT_TASK_FIELDS = frozenset(
+    {
+        "name",
+        "assignee",
+        "due_on",
+        "completed",
+        "custom_fields",
+        "memberships",  # section changes
+        "dependencies",
+        "notes",
+    }
+)
 
 # Handler type: async callable that accepts an event dict
 EventHandler = Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]
@@ -129,6 +132,7 @@ class AsanaWebhookHandler:
 
         # Parse payload
         import json
+
         try:
             payload = json.loads(raw_body)
         except (json.JSONDecodeError, ValueError) as exc:
@@ -182,9 +186,7 @@ class AsanaWebhookHandler:
 
         # Filter noise: for task changes, skip if only irrelevant fields changed
         if resource_type == RESOURCE_TASK and action == ACTION_CHANGED:
-            changed_fields = {
-                c.get("field", "") for c in event.get("change", [])
-            }
+            changed_fields = {c.get("field", "") for c in event.get("change", [])}
             if changed_fields and not changed_fields.intersection(RELEVANT_TASK_FIELDS):
                 log.debug("asana_webhook_irrelevant_fields_skipped", fields=changed_fields)
                 return {"processed": False, "skipped": True, "reason": "irrelevant_fields"}
@@ -264,6 +266,7 @@ class AsanaWebhookHandler:
 # ---------------------------------------------------------------------------
 # Standard event handler stubs — to be implemented by the sync module
 # ---------------------------------------------------------------------------
+
 
 async def noop_handler(event: dict[str, Any]) -> dict[str, Any]:
     """Placeholder handler that logs and returns without processing."""

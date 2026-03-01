@@ -45,12 +45,14 @@ logger = structlog.get_logger(__name__)
 # Result dataclass
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ProjectTemplateResult:
     """GIDs of all objects created during template instantiation."""
+
     project_gid: str
-    section_gids: dict[str, str] = field(default_factory=dict)   # name → gid
-    milestone_gids: dict[str, str] = field(default_factory=dict) # name → gid
+    section_gids: dict[str, str] = field(default_factory=dict)  # name → gid
+    milestone_gids: dict[str, str] = field(default_factory=dict)  # name → gid
     task_gids: list[str] = field(default_factory=list)
     project_id: str = ""  # sidecar internal ID
 
@@ -321,9 +323,7 @@ async def create_capability_build_project(
             if gid and name:
                 result.milestone_gids[name] = gid
 
-    result.task_gids = await _create_seed_tasks_batched(
-        crud, project_gid, _CAPABILITY_SEED_TASKS
-    )
+    result.task_gids = await _create_seed_tasks_batched(crud, project_gid, _CAPABILITY_SEED_TASKS)
 
     logger.info(
         "capability_project_created",
@@ -391,9 +391,7 @@ async def create_stabilization_project(
     assert project_gid
 
     result = ProjectTemplateResult(project_gid=project_gid, project_id=project_id)
-    result.section_gids = await _create_sections_batched(
-        crud, project_gid, _STABILIZATION_SECTIONS
-    )
+    result.section_gids = await _create_sections_batched(crud, project_gid, _STABILIZATION_SECTIONS)
     result.task_gids = await _create_seed_tasks_batched(
         crud, project_gid, _STABILIZATION_SEED_TASKS
     )
@@ -409,6 +407,7 @@ async def create_stabilization_project(
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
+
 
 async def _create_sections_batched(
     crud: AsanaCRUD,
@@ -468,10 +467,12 @@ async def _create_seed_tasks_batched(
     all_task_bodies: list[dict[str, Any]] = []
     for _section, task_names in seed_tasks.items():
         for task_name in task_names:
-            all_task_bodies.append({
-                "name": task_name,
-                "projects": [project_gid],
-            })
+            all_task_bodies.append(
+                {
+                    "name": task_name,
+                    "projects": [project_gid],
+                }
+            )
 
     created_gids: list[str] = []
     for chunk in _chunks(all_task_bodies, 10):

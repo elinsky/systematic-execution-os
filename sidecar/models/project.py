@@ -6,7 +6,7 @@ Sidecar stores asana_gid reference and enrichment fields only.
 
 from datetime import date
 from enum import StrEnum
-from typing import Optional
+
 from pydantic import Field
 
 from .common import AsanaLinkedRecord, HealthStatus, Priority
@@ -42,18 +42,18 @@ class Project(AsanaLinkedRecord):
     project_id: str = Field(description="Internal sidecar identifier")
     name: str
     project_type: ProjectType
-    business_objective: Optional[str] = None
-    success_criteria: Optional[str] = None
+    business_objective: str | None = None
+    success_criteria: str | None = None
     primary_pm_ids: list[str] = Field(
         default_factory=list,
         description="FKs to PMCoverageRecord.pm_id",
     )
-    owner: Optional[str] = None
+    owner: str | None = None
     status: ProjectStatus = ProjectStatus.PLANNING
     priority: Priority = Priority.MEDIUM
     health: HealthStatus = HealthStatus.UNKNOWN
-    start_date: Optional[date] = None
-    target_date: Optional[date] = None
+    start_date: date | None = None
+    target_date: date | None = None
 
     # Relational links (stored as ID lists; resolved at query time)
     linked_pm_need_ids: list[str] = Field(default_factory=list)
@@ -71,9 +71,9 @@ class ProjectCreate(Project):
 
 class ProjectUpdate(AsanaLinkedRecord):
     project_id: str
-    status: Optional[ProjectStatus] = None
-    health: Optional[HealthStatus] = None
-    priority: Optional[Priority] = None
-    owner: Optional[str] = None
-    target_date: Optional[date] = None
-    success_criteria: Optional[str] = None
+    status: ProjectStatus | None = None
+    health: HealthStatus | None = None
+    priority: Priority | None = None
+    owner: str | None = None
+    target_date: date | None = None
+    success_criteria: str | None = None

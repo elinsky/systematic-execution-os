@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import structlog
 
 from sidecar.models.risk import (
@@ -23,17 +21,19 @@ class RiskService:
     def __init__(self, repo: RiskRepository) -> None:
         self._repo = repo
 
-    async def get(self, risk_id: str) -> Optional[RiskBlocker]:
+    async def get(self, risk_id: str) -> RiskBlocker | None:
         return await self._repo.get(risk_id)
 
     async def list(
         self,
-        pm_id: Optional[str] = None,
-        severity: Optional[RiskSeverity] = None,
-        status: Optional[RiskStatus] = None,
+        pm_id: str | None = None,
+        severity: RiskSeverity | None = None,
+        status: RiskStatus | None = None,
         open_only: bool = False,
     ) -> list[RiskBlocker]:
-        return await self._repo.list(pm_id=pm_id, severity=severity, status=status, open_only=open_only)
+        return await self._repo.list(
+            pm_id=pm_id, severity=severity, status=status, open_only=open_only
+        )
 
     async def create(self, data: RiskCreate) -> RiskBlocker:
         risk = await self._repo.create(data)
@@ -54,17 +54,21 @@ class RiskService:
 
     async def escalate(self, risk_id: str) -> RiskBlocker:
         """Shortcut to mark a risk as escalated."""
-        return await self.update(RiskUpdate(
-            risk_id=risk_id,
-            escalation_status=EscalationStatus.ESCALATED,
-        ))
+        return await self.update(
+            RiskUpdate(
+                risk_id=risk_id,
+                escalation_status=EscalationStatus.ESCALATED,
+            )
+        )
 
     async def resolve(self, risk_id: str) -> RiskBlocker:
         """Mark a risk as resolved."""
-        return await self.update(RiskUpdate(
-            risk_id=risk_id,
-            status=RiskStatus.RESOLVED,
-        ))
+        return await self.update(
+            RiskUpdate(
+                risk_id=risk_id,
+                status=RiskStatus.RESOLVED,
+            )
+        )
 
     async def list_aging(self, threshold_days: int) -> list[RiskBlocker]:
         """Return open risks older than threshold_days."""

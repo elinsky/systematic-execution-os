@@ -21,7 +21,6 @@ from sidecar.services.pm_need_service import PMNeedService
 from sidecar.services.project_service import ProjectService
 from sidecar.services.risk_service import RiskService
 
-
 # ── Repository dependencies ────────────────────────────────────────────────
 
 

@@ -8,7 +8,6 @@ POST /decisions/{decision_id}/resolve  Record the outcome of a pending decision
 from __future__ import annotations
 
 from datetime import date, timedelta
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -21,10 +20,10 @@ router = APIRouter()
 
 @router.get("", response_model=list[Decision])
 async def list_decisions(
-    decision_status: Optional[DecisionStatus] = None,
-    project_id: Optional[str] = None,
+    decision_status: DecisionStatus | None = None,
+    project_id: str | None = None,
     pending_only: bool = False,
-    older_than_days: Optional[int] = None,
+    older_than_days: int | None = None,
     svc: DecisionService = Depends(get_decision_service),
 ) -> list[Decision]:
     """List decisions with optional filters."""
@@ -35,10 +34,7 @@ async def list_decisions(
 
     if older_than_days is not None:
         cutoff = date.today() - timedelta(days=older_than_days)
-        decisions = [
-            d for d in decisions
-            if d.created_at and d.created_at <= cutoff
-        ]
+        decisions = [d for d in decisions if d.created_at and d.created_at <= cutoff]
 
     return decisions
 
@@ -64,6 +60,6 @@ async def resolve_decision(
     try:
         return await svc.resolve(data)
     except KeyError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc

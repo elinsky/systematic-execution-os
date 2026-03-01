@@ -9,7 +9,7 @@ is not actively used in v1 services.
 """
 
 from enum import StrEnum
-from typing import Optional
+
 from pydantic import Field
 
 from .common import SidecarBaseModel
@@ -43,13 +43,13 @@ class Capability(SidecarBaseModel):
 
     capability_id: str
     name: str
-    domain: Optional[str] = Field(
+    domain: str | None = Field(
         default=None,
         description="e.g. 'market_data', 'execution', 'research', 'infra'",
     )
-    owner_team: Optional[str] = None
+    owner_team: str | None = None
     current_maturity: CapabilityMaturity = CapabilityMaturity.NONE
-    description: Optional[str] = None
+    description: str | None = None
     known_gaps: list[str] = Field(default_factory=list)
     dependent_pm_ids: list[str] = Field(default_factory=list)
     linked_project_ids: list[str] = Field(default_factory=list)

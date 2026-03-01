@@ -7,14 +7,12 @@ PATCH /milestones/{milestone_id}   Update milestone status, confidence, acceptan
 from __future__ import annotations
 
 from datetime import date, timedelta
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from sidecar.api.deps import get_milestone_repo, get_milestone_service
 from sidecar.models.milestone import (
     Milestone,
-    MilestoneConfidence,
     MilestoneStatus,
     MilestoneUpdate,
 )
@@ -26,10 +24,10 @@ router = APIRouter()
 
 @router.get("", response_model=list[Milestone])
 async def list_milestones(
-    project_id: Optional[str] = None,
-    milestone_status: Optional[MilestoneStatus] = None,
+    project_id: str | None = None,
+    milestone_status: MilestoneStatus | None = None,
     at_risk_only: bool = False,
-    due_within_days: Optional[int] = None,
+    due_within_days: int | None = None,
     svc: MilestoneService = Depends(get_milestone_service),
     milestone_repo: MilestoneRepository = Depends(get_milestone_repo),
 ) -> list[Milestone]:
@@ -66,4 +64,4 @@ async def update_milestone(
     try:
         return await svc.update(data)
     except KeyError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

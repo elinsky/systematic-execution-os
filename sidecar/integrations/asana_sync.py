@@ -19,12 +19,11 @@ Design decisions honored (design-decisions.md):
 
 from __future__ import annotations
 
-import json
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from typing import Any
 
 import structlog
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,17 +32,23 @@ from sidecar.db.pm_coverage import PMCoverageTable
 from sidecar.db.pm_need import PMNeedTable
 from sidecar.db.project import ProjectTable
 from sidecar.db.risk import RiskTable
-from sidecar.integrations.asana.client import AsanaClient, AsanaNotFoundError, TASK_OPT_FIELDS, PROJECT_OPT_FIELDS
+from sidecar.integrations.asana.client import (
+    TASK_OPT_FIELDS,
+    AsanaClient,
+)
 from sidecar.integrations.asana.mapper import AsanaFieldConfig, AsanaMapper
 
 logger = structlog.get_logger(__name__)
 
-_NOW = lambda: datetime.now(timezone.utc).isoformat()
+
+def _NOW() -> str:
+    return datetime.now(UTC).isoformat()
 
 
 # ---------------------------------------------------------------------------
 # Pull sync helpers
 # ---------------------------------------------------------------------------
+
 
 def _custom_fields_index(task: dict[str, Any]) -> dict[str, Any]:
     return {cf["gid"]: cf for cf in task.get("custom_fields") or []}
@@ -86,6 +91,7 @@ def _enum_val(fields: dict[str, Any], gid: str | None) -> str | None:
 # PM Coverage pull sync
 # ---------------------------------------------------------------------------
 
+
 async def pull_sync_pm_coverage_task(
     session: AsyncSession,
     task: dict[str, Any],
@@ -113,18 +119,14 @@ async def pull_sync_pm_coverage_task(
         "health_status": health,
         "region": _enum_val(fields, field_cfg.region_gid),
         "coverage_owner": (task.get("assignee") or {}).get("name"),
-        "last_touchpoint_date": _parse_date_str(
-            _enum_val(fields, field_cfg.last_touchpoint_gid)
-        ),
+        "last_touchpoint_date": _parse_date_str(_enum_val(fields, field_cfg.last_touchpoint_gid)),
         "linked_project_ids": "[]",
         "asana_gid": task["gid"],
         "asana_synced_at": now,
     }
 
     # Check existence before upsert — rowcount is unreliable for ON CONFLICT
-    existing = await session.execute(
-        select(PMCoverageTable).where(PMCoverageTable.pm_id == pm_id)
-    )
+    existing = await session.execute(select(PMCoverageTable).where(PMCoverageTable.pm_id == pm_id))
     is_new = existing.scalar_one_or_none() is None
 
     stmt = sqlite_insert(PMCoverageTable).values(**row)
@@ -155,6 +157,7 @@ async def pull_sync_pm_coverage_task(
 # PM Need pull sync
 # ---------------------------------------------------------------------------
 
+
 async def pull_sync_pm_need_task(
     session: AsyncSession,
     task: dict[str, Any],
@@ -177,7 +180,7 @@ async def pull_sync_pm_need_task(
         "pm_id": pm_id,
         "title": task.get("name", ""),
         "requested_by": (task.get("assignee") or {}).get("name") or "",
-        "date_raised": _parse_date_str(task.get("created_at")) or datetime.now(timezone.utc).date(),
+        "date_raised": _parse_date_str(task.get("created_at")) or datetime.now(UTC).date(),
         "category": category_raw or "other",
         "urgency": urgency_raw or "this_month",
         "status": status,
@@ -188,9 +191,7 @@ async def pull_sync_pm_need_task(
         "asana_synced_at": now,
     }
 
-    existing = await session.execute(
-        select(PMNeedTable).where(PMNeedTable.need_id == pm_need_id)
-    )
+    existing = await session.execute(select(PMNeedTable).where(PMNeedTable.need_id == pm_need_id))
     is_new = existing.scalar_one_or_none() is None
 
     stmt = sqlite_insert(PMNeedTable).values(**row)
@@ -198,7 +199,7 @@ async def pull_sync_pm_need_task(
         index_elements=["need_id"],
         set_={
             "title": stmt.excluded.title,
-            "status": stmt.excluded.status,          # D1: status from Asana section only
+            "status": stmt.excluded.status,  # D1: status from Asana section only
             "category": stmt.excluded.category,
             "urgency": stmt.excluded.urgency,
             "desired_by_date": stmt.excluded.desired_by_date,
@@ -220,6 +221,7 @@ async def pull_sync_pm_need_task(
 # ---------------------------------------------------------------------------
 # Project pull sync
 # ---------------------------------------------------------------------------
+
 
 async def pull_sync_project(
     session: AsyncSession,
@@ -286,6 +288,7 @@ async def pull_sync_project(
 # Milestone pull sync
 # ---------------------------------------------------------------------------
 
+
 async def pull_sync_milestone(
     session: AsyncSession,
     task: dict[str, Any],
@@ -348,6 +351,7 @@ async def pull_sync_milestone(
 # Risk pull sync
 # ---------------------------------------------------------------------------
 
+
 async def pull_sync_risk(
     session: AsyncSession,
     task: dict[str, Any],
@@ -356,7 +360,6 @@ async def pull_sync_risk(
 ) -> bool:
     """Upsert a Risk/Blocker task from Asana into the sidecar DB."""
     fields = _custom_fields_index(task)
-    mapper = AsanaMapper(field_cfg)
     completed = task.get("completed", False)
     now = _NOW()
 
@@ -373,7 +376,7 @@ async def pull_sync_risk(
         "status": status,
         "escalation_status": esc_raw or "none",
         "mitigation_plan": task.get("notes") or None,
-        "date_opened": _parse_date_str(task.get("created_at")) or datetime.now(timezone.utc).date(),
+        "date_opened": _parse_date_str(task.get("created_at")) or datetime.now(UTC).date(),
         "resolution_date": _parse_date_str(task.get("completed_at")) if completed else None,
         "impacted_pm_ids": "[]",
         "impacted_project_ids": "[]",
@@ -382,9 +385,7 @@ async def pull_sync_risk(
         "asana_synced_at": now,
     }
 
-    existing = await session.execute(
-        select(RiskTable).where(RiskTable.risk_id == risk_id)
-    )
+    existing = await session.execute(select(RiskTable).where(RiskTable.risk_id == risk_id))
     is_new = existing.scalar_one_or_none() is None
 
     stmt = sqlite_insert(RiskTable).values(**row)
@@ -415,54 +416,40 @@ async def pull_sync_risk(
 # Lookup helpers (asana_gid → sidecar row)
 # ---------------------------------------------------------------------------
 
-async def find_pm_coverage_by_gid(
-    session: AsyncSession, asana_gid: str
-) -> PMCoverageTable | None:
+
+async def find_pm_coverage_by_gid(session: AsyncSession, asana_gid: str) -> PMCoverageTable | None:
     result = await session.execute(
         select(PMCoverageTable).where(PMCoverageTable.asana_gid == asana_gid)
     )
     return result.scalar_one_or_none()
 
 
-async def find_pm_need_by_gid(
-    session: AsyncSession, asana_gid: str
-) -> PMNeedTable | None:
-    result = await session.execute(
-        select(PMNeedTable).where(PMNeedTable.asana_gid == asana_gid)
-    )
+async def find_pm_need_by_gid(session: AsyncSession, asana_gid: str) -> PMNeedTable | None:
+    result = await session.execute(select(PMNeedTable).where(PMNeedTable.asana_gid == asana_gid))
     return result.scalar_one_or_none()
 
 
-async def find_milestone_by_gid(
-    session: AsyncSession, asana_gid: str
-) -> MilestoneTable | None:
+async def find_milestone_by_gid(session: AsyncSession, asana_gid: str) -> MilestoneTable | None:
     result = await session.execute(
         select(MilestoneTable).where(MilestoneTable.asana_gid == asana_gid)
     )
     return result.scalar_one_or_none()
 
 
-async def find_risk_by_gid(
-    session: AsyncSession, asana_gid: str
-) -> RiskTable | None:
-    result = await session.execute(
-        select(RiskTable).where(RiskTable.asana_gid == asana_gid)
-    )
+async def find_risk_by_gid(session: AsyncSession, asana_gid: str) -> RiskTable | None:
+    result = await session.execute(select(RiskTable).where(RiskTable.asana_gid == asana_gid))
     return result.scalar_one_or_none()
 
 
-async def find_project_by_gid(
-    session: AsyncSession, asana_gid: str
-) -> ProjectTable | None:
-    result = await session.execute(
-        select(ProjectTable).where(ProjectTable.asana_gid == asana_gid)
-    )
+async def find_project_by_gid(session: AsyncSession, asana_gid: str) -> ProjectTable | None:
+    result = await session.execute(select(ProjectTable).where(ProjectTable.asana_gid == asana_gid))
     return result.scalar_one_or_none()
 
 
 # ---------------------------------------------------------------------------
 # Full pull sync for a single project's tasks (milestones + deliverables)
 # ---------------------------------------------------------------------------
+
 
 async def full_pull_sync_project_tasks(
     client: AsanaClient,

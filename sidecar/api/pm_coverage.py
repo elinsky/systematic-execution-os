@@ -8,9 +8,8 @@ PATCH /pm-coverage/{pm_id} Partial update
 
 from __future__ import annotations
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 
 from sidecar.api.deps import (
     get_milestone_repo,
@@ -26,13 +25,12 @@ from sidecar.models.pm_coverage import (
     PMCoverageRecord,
     PMCoverageUpdate,
 )
-from sidecar.models.pm_need import PMNeed, NeedStatus
+from sidecar.models.pm_need import NeedStatus, PMNeed
 from sidecar.models.risk import RiskBlocker, RiskSeverity
 from sidecar.persistence.milestone import MilestoneRepository
 from sidecar.persistence.pm_need import PMNeedRepository
 from sidecar.persistence.risk import RiskRepository
 from sidecar.services.pm_coverage_service import PMCoverageService
-from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -50,8 +48,8 @@ class PMStatusSummary(BaseModel):
 
 @router.get("", response_model=list[PMCoverageRecord])
 async def list_pm_coverage(
-    stage: Optional[OnboardingStage] = None,
-    health: Optional[HealthStatus] = None,
+    stage: OnboardingStage | None = None,
+    health: HealthStatus | None = None,
     svc: PMCoverageService = Depends(get_pm_coverage_service),
 ) -> list[PMCoverageRecord]:
     """List all PM Coverage records, optionally filtered by stage or health."""
@@ -113,7 +111,7 @@ async def create_pm_coverage(
     try:
         return await svc.create(data)
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
 
 @router.patch("/{pm_id}", response_model=PMCoverageRecord)
@@ -128,4 +126,4 @@ async def update_pm_coverage(
     try:
         return await svc.update(data)
     except KeyError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

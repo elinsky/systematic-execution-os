@@ -3,19 +3,45 @@
 All Pydantic v2 domain models for the BAM Systematic Execution OS sidecar.
 """
 
+from .capability import (
+    Capability,
+    CapabilityMaturity,
+    RoadmapStatus,
+)
 from .common import (
-    SidecarBaseModel,
     AsanaLinkedRecord,
+    BusinessImpact,
     HealthStatus,
     Priority,
+    SidecarBaseModel,
     Urgency,
-    BusinessImpact,
-
+)
+from .decision import (
+    ArtifactType,
+    Decision,
+    DecisionCreate,
+    DecisionResolve,
+    DecisionStatus,
+    ImpactedArtifact,
+)
+from .deliverable import (
+    Deliverable,
+    DeliverableCreate,
+    DeliverableStatus,
+    DeliverableUpdate,
+)
+from .milestone import (
+    STANDARD_ONBOARDING_MILESTONES,
+    Milestone,
+    MilestoneConfidence,
+    MilestoneCreate,
+    MilestoneStatus,
+    MilestoneUpdate,
 )
 from .pm_coverage import (
     OnboardingStage,
-    PMCoverageRecord,
     PMCoverageCreate,
+    PMCoverageRecord,
     PMCoverageUpdate,
 )
 from .pm_need import (
@@ -26,51 +52,24 @@ from .pm_need import (
     PMNeedUpdate,
 )
 from .project import (
-    ProjectType,
-    ProjectStatus,
     Project,
     ProjectCreate,
+    ProjectStatus,
+    ProjectType,
     ProjectUpdate,
 )
-from .milestone import (
-    MilestoneStatus,
-    MilestoneConfidence,
-    STANDARD_ONBOARDING_MILESTONES,
-    Milestone,
-    MilestoneCreate,
-    MilestoneUpdate,
-)
-from .deliverable import (
-    DeliverableStatus,
-    Deliverable,
-    DeliverableCreate,
-    DeliverableUpdate,
-)
 from .risk import (
-    RiskType,
-    RiskSeverity,
     EscalationStatus,
-    RiskStatus,
     RiskBlocker,
     RiskCreate,
+    RiskSeverity,
+    RiskStatus,
+    RiskType,
     RiskUpdate,
-)
-from .decision import (
-    DecisionStatus,
-    ArtifactType,
-    ImpactedArtifact,
-    Decision,
-    DecisionCreate,
-    DecisionResolve,
 )
 from .status_update import (
     StatusScopeType,
     StatusUpdate,
-)
-from .capability import (
-    CapabilityMaturity,
-    RoadmapStatus,
-    Capability,
 )
 
 __all__ = [
@@ -81,7 +80,6 @@ __all__ = [
     "Priority",
     "Urgency",
     "BusinessImpact",
-
     # pm_coverage
     "OnboardingStage",
     "PMCoverageRecord",

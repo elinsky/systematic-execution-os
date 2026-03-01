@@ -8,8 +8,6 @@ PATCH /pm-needs/{pm_need_id}  Update PM Need metadata (not status)
 
 from __future__ import annotations
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from sidecar.api.deps import get_pm_need_service
@@ -28,10 +26,10 @@ router = APIRouter()
 
 @router.get("", response_model=list[PMNeed])
 async def list_pm_needs(
-    pm_id: Optional[str] = None,
-    need_status: Optional[NeedStatus] = None,
-    category: Optional[NeedCategory] = None,
-    urgency: Optional[Urgency] = None,
+    pm_id: str | None = None,
+    need_status: NeedStatus | None = None,
+    category: NeedCategory | None = None,
+    urgency: Urgency | None = None,
     unmet_only: bool = False,
     svc: PMNeedService = Depends(get_pm_need_service),
 ) -> list[PMNeed]:
@@ -80,4 +78,4 @@ async def update_pm_need(
     try:
         return await svc.update(data)
     except KeyError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

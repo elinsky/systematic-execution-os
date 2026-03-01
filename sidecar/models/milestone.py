@@ -6,7 +6,7 @@ Sidecar stores asana_gid + computed confidence and acceptance criteria enrichmen
 
 from datetime import date
 from enum import StrEnum
-from typing import Optional
+
 from pydantic import Field
 
 from .common import AsanaLinkedRecord
@@ -55,19 +55,19 @@ class Milestone(AsanaLinkedRecord):
     milestone_id: str = Field(description="Internal sidecar identifier")
     project_id: str = Field(description="FK to Project.project_id")
     name: str
-    target_date: Optional[date] = None
-    owner: Optional[str] = None
+    target_date: date | None = None
+    owner: str | None = None
     status: MilestoneStatus = MilestoneStatus.NOT_STARTED
     confidence: MilestoneConfidence = MilestoneConfidence.UNKNOWN
-    gating_conditions: Optional[str] = Field(
+    gating_conditions: str | None = Field(
         default=None,
         description="What must be true for this milestone to be considered reachable",
     )
-    acceptance_criteria: Optional[str] = Field(
+    acceptance_criteria: str | None = Field(
         default=None,
         description="What must be true for this milestone to be marked complete",
     )
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class MilestoneCreate(Milestone):
@@ -78,9 +78,9 @@ class MilestoneCreate(Milestone):
 
 class MilestoneUpdate(AsanaLinkedRecord):
     milestone_id: str
-    status: Optional[MilestoneStatus] = None
-    confidence: Optional[MilestoneConfidence] = None
-    target_date: Optional[date] = None
-    owner: Optional[str] = None
-    acceptance_criteria: Optional[str] = None
-    notes: Optional[str] = None
+    status: MilestoneStatus | None = None
+    confidence: MilestoneConfidence | None = None
+    target_date: date | None = None
+    owner: str | None = None
+    acceptance_criteria: str | None = None
+    notes: str | None = None

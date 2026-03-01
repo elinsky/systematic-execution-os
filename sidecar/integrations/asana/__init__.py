@@ -8,8 +8,8 @@ Exports:
 """
 
 from .client import AsanaClient
-from .mapper import AsanaMapper
 from .crud import AsanaCRUD
+from .mapper import AsanaMapper
 from .webhooks import AsanaWebhookHandler
 
 __all__ = [

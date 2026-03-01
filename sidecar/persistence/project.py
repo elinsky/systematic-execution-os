@@ -5,14 +5,12 @@ Source of truth: Asana. Sidecar stores asana_gid + enrichment fields.
 
 from __future__ import annotations
 
-from typing import Optional
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sidecar.db.project import ProjectTable
-from sidecar.models.project import Project, ProjectCreate, ProjectStatus, ProjectType, ProjectUpdate
 from sidecar.models.common import HealthStatus, Priority
+from sidecar.models.project import Project, ProjectCreate, ProjectStatus, ProjectType, ProjectUpdate
 from sidecar.persistence.base import decode_list, encode_list
 
 
@@ -33,8 +31,8 @@ def _row_to_model(row: ProjectTable) -> Project:
         linked_pm_need_ids=decode_list(row.linked_pm_need_ids),
         linked_capability_ids=decode_list(row.linked_capability_ids),
         linked_milestone_ids=[],  # resolved at query time via MilestoneRepository
-        linked_risk_ids=[],       # resolved at query time via RiskRepository
-        linked_decision_ids=[],   # resolved at query time via DecisionRepository
+        linked_risk_ids=[],  # resolved at query time via RiskRepository
+        linked_decision_ids=[],  # resolved at query time via DecisionRepository
         asana_gid=row.asana_gid,
         asana_synced_at=row.asana_synced_at,
         created_at=row.created_at,
@@ -47,14 +45,14 @@ class ProjectRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get(self, project_id: str) -> Optional[Project]:
+    async def get(self, project_id: str) -> Project | None:
         result = await self._session.execute(
             select(ProjectTable).where(ProjectTable.project_id == project_id)
         )
         row = result.scalar_one_or_none()
         return _row_to_model(row) if row else None
 
-    async def get_by_asana_gid(self, asana_gid: str) -> Optional[Project]:
+    async def get_by_asana_gid(self, asana_gid: str) -> Project | None:
         result = await self._session.execute(
             select(ProjectTable).where(ProjectTable.asana_gid == asana_gid)
         )
@@ -63,9 +61,9 @@ class ProjectRepository:
 
     async def list(
         self,
-        pm_id: Optional[str] = None,
-        health: Optional[HealthStatus] = None,
-        status: Optional[ProjectStatus] = None,
+        pm_id: str | None = None,
+        health: HealthStatus | None = None,
+        status: ProjectStatus | None = None,
         include_archived: bool = False,
     ) -> list[Project]:
         stmt = select(ProjectTable)
@@ -107,7 +105,7 @@ class ProjectRepository:
         await self._session.refresh(row)
         return _row_to_model(row)
 
-    async def update(self, data: ProjectUpdate) -> Optional[Project]:
+    async def update(self, data: ProjectUpdate) -> Project | None:
         result = await self._session.execute(
             select(ProjectTable).where(ProjectTable.project_id == data.project_id)
         )

@@ -17,7 +17,8 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 import structlog
@@ -58,6 +59,7 @@ _BASE_BACKOFF_SECONDS = 1.0
 # Exceptions
 # ---------------------------------------------------------------------------
 
+
 class AsanaAuthError(Exception):
     """401/403 — misconfigured PAT or missing Asana permissions."""
 
@@ -81,6 +83,7 @@ class AsanaAPIError(Exception):
 # ---------------------------------------------------------------------------
 # Client
 # ---------------------------------------------------------------------------
+
 
 class AsanaClient:
     """Async HTTP client for the Asana REST API.
@@ -121,7 +124,7 @@ class AsanaClient:
     async def aclose(self) -> None:
         await self._http.aclose()
 
-    async def __aenter__(self) -> "AsanaClient":
+    async def __aenter__(self) -> AsanaClient:
         return self
 
     async def __aexit__(self, *_: Any) -> None:
@@ -204,9 +207,7 @@ class AsanaClient:
             raise ValueError(
                 f"Asana batch API supports at most 10 operations; got {len(operations)}"
             )
-        result = await self._request(
-            "POST", "batch", json={"data": {"actions": operations}}
-        )
+        result = await self._request("POST", "batch", json={"data": {"actions": operations}})
         return result.get("data", [])
 
     # ------------------------------------------------------------------
@@ -225,9 +226,7 @@ class AsanaClient:
         for attempt in range(_MAX_RETRIES + 1):
             t0 = time.monotonic()
             try:
-                response = await self._http.request(
-                    method, url, params=params, json=json
-                )
+                response = await self._http.request(method, url, params=params, json=json)
             except httpx.TimeoutException:
                 elapsed = int((time.monotonic() - t0) * 1000)
                 logger.warning(
@@ -270,15 +269,11 @@ class AsanaClient:
                     path=path,
                     message=error_msg,
                 )
-                raise AsanaAuthError(
-                    f"Asana auth error {status} on {method} {path}: {error_msg}"
-                )
+                raise AsanaAuthError(f"Asana auth error {status} on {method} {path}: {error_msg}")
 
             if status == 404:
                 logger.warning("asana_not_found", path=path, message=error_msg)
-                raise AsanaNotFoundError(
-                    f"Asana 404 on {method} {path}: {error_msg}"
-                )
+                raise AsanaNotFoundError(f"Asana 404 on {method} {path}: {error_msg}")
 
             if status in _RETRYABLE_STATUSES:
                 retry_after = self._parse_retry_after(response, attempt)
@@ -345,10 +340,10 @@ class AsanaClient:
                 return float(header)
             except ValueError:
                 pass
-        return _BASE_BACKOFF_SECONDS * (2 ** attempt)
+        return _BASE_BACKOFF_SECONDS * (2**attempt)
 
     @staticmethod
     async def _sleep_backoff(attempt: int) -> None:
-        wait = _BASE_BACKOFF_SECONDS * (2 ** attempt)
+        wait = _BASE_BACKOFF_SECONDS * (2**attempt)
         logger.debug("asana_backoff", wait_s=wait, attempt=attempt)
         await asyncio.sleep(wait)

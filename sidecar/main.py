@@ -42,6 +42,7 @@ def create_app() -> FastAPI:
     )
 
     from sidecar.api.router import router
+
     app.include_router(router, prefix="/api/v1")
 
     @app.get("/health", tags=["health"])

@@ -5,8 +5,6 @@ Source of truth: Asana. Sidecar stores asana_gid + confidence/acceptance enrichm
 
 from __future__ import annotations
 
-from typing import Optional
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,14 +41,14 @@ class MilestoneRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get(self, milestone_id: str) -> Optional[Milestone]:
+    async def get(self, milestone_id: str) -> Milestone | None:
         result = await self._session.execute(
             select(MilestoneTable).where(MilestoneTable.milestone_id == milestone_id)
         )
         row = result.scalar_one_or_none()
         return _row_to_model(row) if row else None
 
-    async def get_by_asana_gid(self, asana_gid: str) -> Optional[Milestone]:
+    async def get_by_asana_gid(self, asana_gid: str) -> Milestone | None:
         result = await self._session.execute(
             select(MilestoneTable).where(MilestoneTable.asana_gid == asana_gid)
         )
@@ -69,7 +67,9 @@ class MilestoneRepository:
         """Return milestones with AT_RISK or MISSED status."""
         result = await self._session.execute(
             select(MilestoneTable).where(
-                MilestoneTable.status.in_([MilestoneStatus.AT_RISK.value, MilestoneStatus.MISSED.value])
+                MilestoneTable.status.in_(
+                    [MilestoneStatus.AT_RISK.value, MilestoneStatus.MISSED.value]
+                )
             )
         )
         return [_row_to_model(r) for r in result.scalars().all()]
@@ -92,7 +92,7 @@ class MilestoneRepository:
         await self._session.refresh(row)
         return _row_to_model(row)
 
-    async def update(self, data: MilestoneUpdate) -> Optional[Milestone]:
+    async def update(self, data: MilestoneUpdate) -> Milestone | None:
         result = await self._session.execute(
             select(MilestoneTable).where(MilestoneTable.milestone_id == data.milestone_id)
         )

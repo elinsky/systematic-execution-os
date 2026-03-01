@@ -5,14 +5,12 @@ Source of truth: Hybrid (Asana task + sidecar metadata).
 
 from __future__ import annotations
 
-from typing import Optional
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sidecar.db.pm_need import PMNeedTable
-from sidecar.models.pm_need import NeedCategory, NeedStatus, PMNeed, PMNeedCreate, PMNeedUpdate
 from sidecar.models.common import BusinessImpact, Urgency
+from sidecar.models.pm_need import NeedCategory, NeedStatus, PMNeed, PMNeedCreate, PMNeedUpdate
 from sidecar.persistence.base import decode_list, encode_list
 
 
@@ -27,7 +25,9 @@ def _row_to_model(row: PMNeedTable) -> PMNeed:
         date_raised=row.date_raised,
         category=NeedCategory(row.category),
         urgency=Urgency(row.urgency),
-        business_impact=BusinessImpact(row.business_impact) if row.business_impact else BusinessImpact.MEDIUM,
+        business_impact=BusinessImpact(row.business_impact)
+        if row.business_impact
+        else BusinessImpact.MEDIUM,
         desired_by_date=row.desired_by_date,
         status=NeedStatus(row.status),
         mapped_capability_id=row.mapped_capability_id,
@@ -43,14 +43,14 @@ class PMNeedRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get(self, need_id: str) -> Optional[PMNeed]:
+    async def get(self, need_id: str) -> PMNeed | None:
         result = await self._session.execute(
             select(PMNeedTable).where(PMNeedTable.need_id == need_id)
         )
         row = result.scalar_one_or_none()
         return _row_to_model(row) if row else None
 
-    async def get_by_asana_gid(self, asana_gid: str) -> Optional[PMNeed]:
+    async def get_by_asana_gid(self, asana_gid: str) -> PMNeed | None:
         result = await self._session.execute(
             select(PMNeedTable).where(PMNeedTable.asana_gid == asana_gid)
         )
@@ -59,9 +59,9 @@ class PMNeedRepository:
 
     async def list(
         self,
-        pm_id: Optional[str] = None,
-        status: Optional[NeedStatus] = None,
-        category: Optional[NeedCategory] = None,
+        pm_id: str | None = None,
+        status: NeedStatus | None = None,
+        category: NeedCategory | None = None,
         include_archived: bool = False,
     ) -> list[PMNeed]:
         stmt = select(PMNeedTable)
@@ -88,7 +88,9 @@ class PMNeedRepository:
             date_raised=data.date_raised,
             category=data.category.value,
             urgency=data.urgency.value,
-            business_impact=data.business_impact.value if data.business_impact else BusinessImpact.MEDIUM.value,
+            business_impact=data.business_impact.value
+            if data.business_impact
+            else BusinessImpact.MEDIUM.value,
             desired_by_date=data.desired_by_date,
             status=data.status.value,
             mapped_capability_id=data.mapped_capability_id,
@@ -102,7 +104,7 @@ class PMNeedRepository:
         await self._session.refresh(row)
         return _row_to_model(row)
 
-    async def update(self, data: PMNeedUpdate) -> Optional[PMNeed]:
+    async def update(self, data: PMNeedUpdate) -> PMNeed | None:
         result = await self._session.execute(
             select(PMNeedTable).where(PMNeedTable.need_id == data.pm_need_id)
         )

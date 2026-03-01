@@ -7,8 +7,6 @@ PATCH /risks/{risk_id}   Update risk status or escalation
 
 from __future__ import annotations
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from sidecar.api.deps import get_risk_service
@@ -27,12 +25,12 @@ router = APIRouter()
 
 @router.get("", response_model=list[RiskBlocker])
 async def list_risks(
-    risk_type: Optional[RiskType] = None,
-    severity: Optional[RiskSeverity] = None,
-    risk_status: Optional[RiskStatus] = None,
-    pm_id: Optional[str] = None,
+    risk_type: RiskType | None = None,
+    severity: RiskSeverity | None = None,
+    risk_status: RiskStatus | None = None,
+    pm_id: str | None = None,
     open_only: bool = True,
-    older_than_days: Optional[int] = None,
+    older_than_days: int | None = None,
     svc: RiskService = Depends(get_risk_service),
 ) -> list[RiskBlocker]:
     """List risks and blockers with optional filters."""
@@ -78,4 +76,4 @@ async def update_risk(
     try:
         return await svc.update(data)
     except KeyError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

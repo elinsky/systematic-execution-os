@@ -24,7 +24,10 @@ from datetime import date, datetime
 from typing import Any
 
 from sidecar.models import (
+    BusinessImpact,
+    EscalationStatus,
     HealthStatus,
+    Milestone,
     MilestoneConfidence,
     MilestoneStatus,
     NeedCategory,
@@ -36,20 +39,17 @@ from sidecar.models import (
     Project,
     ProjectStatus,
     ProjectType,
-    Milestone,
     RiskBlocker,
     RiskSeverity,
     RiskStatus,
     RiskType,
-    EscalationStatus,
     Urgency,
-    BusinessImpact,
 )
-
 
 # ---------------------------------------------------------------------------
 # Config dataclass — maps field names to Asana custom field GIDs
 # ---------------------------------------------------------------------------
+
 
 class AsanaFieldConfig:
     """Holds Asana custom field GIDs loaded from settings.
@@ -114,6 +114,7 @@ class AsanaFieldConfig:
 # ---------------------------------------------------------------------------
 # Mapper
 # ---------------------------------------------------------------------------
+
 
 class AsanaMapper:
     """Translates between raw Asana API dicts and sidecar domain models.
@@ -371,7 +372,9 @@ class AsanaMapper:
             severity=self._enum_from_field(
                 fields, self._cfg.severity_gid, RiskSeverity, RiskSeverity.MEDIUM
             ),
-            status=RiskStatus.RESOLVED if completed else self._enum_from_field(
+            status=RiskStatus.RESOLVED
+            if completed
+            else self._enum_from_field(
                 fields, self._cfg.risk_status_gid, RiskStatus, RiskStatus.OPEN
             ),
             escalation_status=self._enum_from_field(
@@ -519,9 +522,7 @@ class AsanaMapper:
     }
 
     def _stage_from_section(self, section_name: str) -> OnboardingStage:
-        return self._SECTION_TO_STAGE.get(
-            section_name.lower().strip(), OnboardingStage.PIPELINE
-        )
+        return self._SECTION_TO_STAGE.get(section_name.lower().strip(), OnboardingStage.PIPELINE)
 
     _SECTION_TO_NEED_STATUS: dict[str, NeedStatus] = {
         "new": NeedStatus.NEW,
@@ -537,9 +538,7 @@ class AsanaMapper:
     }
 
     def _need_status_from_section(self, section_name: str) -> NeedStatus:
-        return self._SECTION_TO_NEED_STATUS.get(
-            section_name.lower().strip(), NeedStatus.NEW
-        )
+        return self._SECTION_TO_NEED_STATUS.get(section_name.lower().strip(), NeedStatus.NEW)
 
     @staticmethod
     def _project_status_from_asana(current_status: dict[str, Any]) -> ProjectStatus:

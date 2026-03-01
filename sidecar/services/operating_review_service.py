@@ -8,17 +8,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from typing import Optional
 
 import structlog
 
 from sidecar.models.common import HealthStatus
-from sidecar.models.decision import Decision, DecisionStatus
+from sidecar.models.decision import Decision
 from sidecar.models.milestone import Milestone, MilestoneStatus
-from sidecar.models.pm_coverage import OnboardingStage, PMCoverageRecord
-from sidecar.models.pm_need import NeedStatus, PMNeed
+from sidecar.models.pm_coverage import PMCoverageRecord
+from sidecar.models.pm_need import NeedStatus
 from sidecar.models.project import Project, ProjectStatus
-from sidecar.models.risk import RiskBlocker, RiskStatus
+from sidecar.models.risk import RiskBlocker
 from sidecar.persistence.decision import DecisionRepository
 from sidecar.persistence.milestone import MilestoneRepository
 from sidecar.persistence.pm_coverage import PMCoverageRepository
@@ -32,6 +31,7 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class PMAtRisk:
     """A PM record flagged as at-risk for the operating review."""
+
     pm: PMCoverageRecord
     reasons: list[str] = field(default_factory=list)
     open_blockers: list[RiskBlocker] = field(default_factory=list)
@@ -41,6 +41,7 @@ class PMAtRisk:
 @dataclass
 class OperatingReviewAgenda:
     """Auto-generated weekly operating review agenda."""
+
     generated_on: date
     pms_at_risk: list[PMAtRisk]
     slipping_milestones: list[Milestone]
@@ -131,12 +132,14 @@ class OperatingReviewService:
                 reasons.append(f"open_blockers={len(open_blockers)}")
 
             if reasons:
-                result.append(PMAtRisk(
-                    pm=pm,
-                    reasons=reasons,
-                    open_blockers=open_blockers,
-                    open_need_count=len(unresolved_needs),
-                ))
+                result.append(
+                    PMAtRisk(
+                        pm=pm,
+                        reasons=reasons,
+                        open_blockers=open_blockers,
+                        open_need_count=len(unresolved_needs),
+                    )
+                )
 
         return result
 
@@ -146,9 +149,7 @@ class OperatingReviewService:
         cutoff = today + timedelta(days=self._milestone_due_threshold)
         slipping = []
         for m in at_risk:
-            if m.target_date and m.target_date <= cutoff:
-                slipping.append(m)
-            elif m.status == MilestoneStatus.MISSED:
+            if m.target_date and m.target_date <= cutoff or m.status == MilestoneStatus.MISSED:
                 slipping.append(m)
         return slipping
 

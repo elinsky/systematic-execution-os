@@ -14,7 +14,7 @@ posted to Slack/Teams via the bot adapter.
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 import structlog
@@ -62,7 +62,7 @@ async def _build_digest(session: AsyncSession, settings: Settings) -> dict[str, 
     blocker_cutoff = today - timedelta(days=settings.blocker_age_alert_days)
 
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "overdue_milestones": await _overdue_milestones(session, today),
         "near_milestones": await _near_milestones(session, today, alert_window),
         "pms_at_risk": await _pms_at_risk(session),
@@ -70,9 +70,7 @@ async def _build_digest(session: AsyncSession, settings: Settings) -> dict[str, 
     }
 
 
-async def _overdue_milestones(
-    session: AsyncSession, today: date
-) -> list[dict[str, Any]]:
+async def _overdue_milestones(session: AsyncSession, today: date) -> list[dict[str, Any]]:
     """Milestones past their target date and not yet complete."""
     result = await session.execute(
         select(MilestoneTable).where(
@@ -144,9 +142,7 @@ async def _pms_at_risk(session: AsyncSession) -> list[dict[str, Any]]:
     ]
 
 
-async def _aging_blockers(
-    session: AsyncSession, cutoff: date
-) -> list[dict[str, Any]]:
+async def _aging_blockers(session: AsyncSession, cutoff: date) -> list[dict[str, Any]]:
     """Open risks/blockers opened before the cutoff date (too old)."""
     result = await session.execute(
         select(RiskTable).where(

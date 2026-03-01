@@ -7,8 +7,8 @@ Source of truth: Hybrid.
 
 from datetime import date
 from enum import StrEnum
-from typing import Optional
-from pydantic import Field, model_validator
+
+from pydantic import Field
 
 from .common import AsanaLinkedRecord
 
@@ -57,9 +57,9 @@ class RiskBlocker(AsanaLinkedRecord):
     risk_type: RiskType = RiskType.RISK
     severity: RiskSeverity = RiskSeverity.MEDIUM
     status: RiskStatus = RiskStatus.OPEN
-    owner: Optional[str] = None
+    owner: str | None = None
     date_opened: date
-    resolution_date: Optional[date] = None
+    resolution_date: date | None = None
 
     # Impact linkages
     impacted_pm_ids: list[str] = Field(default_factory=list)
@@ -68,13 +68,14 @@ class RiskBlocker(AsanaLinkedRecord):
 
     # Escalation
     escalation_status: EscalationStatus = EscalationStatus.NONE
-    mitigation_plan: Optional[str] = None
-    notes: Optional[str] = None
+    mitigation_plan: str | None = None
+    notes: str | None = None
 
     @property
-    def age_days(self) -> Optional[int]:
+    def age_days(self) -> int | None:
         """Computed from date_opened to today; use at query time."""
         from datetime import date as date_type
+
         if self.date_opened:
             return (date_type.today() - self.date_opened).days
         return None
@@ -90,10 +91,10 @@ class RiskCreate(RiskBlocker):
 
 class RiskUpdate(AsanaLinkedRecord):
     risk_id: str
-    status: Optional[RiskStatus] = None
-    severity: Optional[RiskSeverity] = None
-    escalation_status: Optional[EscalationStatus] = None
-    owner: Optional[str] = None
-    mitigation_plan: Optional[str] = None
-    resolution_date: Optional[date] = None
-    notes: Optional[str] = None
+    status: RiskStatus | None = None
+    severity: RiskSeverity | None = None
+    escalation_status: EscalationStatus | None = None
+    owner: str | None = None
+    mitigation_plan: str | None = None
+    resolution_date: date | None = None
+    notes: str | None = None

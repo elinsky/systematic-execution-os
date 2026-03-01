@@ -19,7 +19,7 @@ The output format mirrors api-design.md § Operating Review Endpoints.
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 import structlog
@@ -65,7 +65,7 @@ async def _build_agenda(session: AsyncSession, settings: Settings) -> dict[str, 
     lookahead = today + timedelta(days=30)
 
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "overdue_milestones": await _overdue_milestones(session, today),
         "milestone_slips": await _milestone_slips(session, today, lookahead),
         "pms_at_risk": await _pms_at_risk_with_needs(session),
@@ -74,14 +74,14 @@ async def _build_agenda(session: AsyncSession, settings: Settings) -> dict[str, 
     }
 
 
-async def _overdue_milestones(
-    session: AsyncSession, today: date
-) -> list[dict[str, Any]]:
+async def _overdue_milestones(session: AsyncSession, today: date) -> list[dict[str, Any]]:
     result = await session.execute(
-        select(MilestoneTable).where(
+        select(MilestoneTable)
+        .where(
             MilestoneTable.target_date < today.isoformat(),
             MilestoneTable.status.notin_(["complete", "missed"]),
-        ).order_by(MilestoneTable.target_date)
+        )
+        .order_by(MilestoneTable.target_date)
     )
     rows = result.scalars().all()
     return [
@@ -105,16 +105,18 @@ async def _milestone_slips(
 ) -> list[dict[str, Any]]:
     """Milestones within the lookahead window that are at_risk or low confidence."""
     result = await session.execute(
-        select(MilestoneTable).where(
+        select(MilestoneTable)
+        .where(
             MilestoneTable.target_date >= today.isoformat(),
             MilestoneTable.target_date <= lookahead.isoformat(),
             MilestoneTable.status.notin_(["complete"]),
             # at_risk status OR low/blocked confidence
             (
-                MilestoneTable.status.in_(["at_risk"]) |
-                MilestoneTable.confidence.in_(["low", "blocked"])
+                MilestoneTable.status.in_(["at_risk"])
+                | MilestoneTable.confidence.in_(["low", "blocked"])
             ),
-        ).order_by(MilestoneTable.target_date)
+        )
+        .order_by(MilestoneTable.target_date)
     )
     rows = result.scalars().all()
     return [
@@ -152,25 +154,27 @@ async def _pms_at_risk_with_needs(session: AsyncSession) -> list[dict[str, Any]]
             )
         )
         open_needs = need_result.scalars().all()
-        output.append({
-            "pm_id": pm.pm_id,
-            "pm_name": pm.pm_name,
-            "onboarding_stage": pm.onboarding_stage,
-            "health_status": pm.health_status,
-            "coverage_owner": pm.coverage_owner,
-            "go_live_target_date": str(pm.go_live_target_date) if pm.go_live_target_date else None,
-            "open_needs_count": len(open_needs),
-            "top_open_needs": [
-                {"need_id": n.need_id, "title": n.title, "urgency": n.urgency}
-                for n in open_needs[:3]
-            ],
-        })
+        output.append(
+            {
+                "pm_id": pm.pm_id,
+                "pm_name": pm.pm_name,
+                "onboarding_stage": pm.onboarding_stage,
+                "health_status": pm.health_status,
+                "coverage_owner": pm.coverage_owner,
+                "go_live_target_date": str(pm.go_live_target_date)
+                if pm.go_live_target_date
+                else None,
+                "open_needs_count": len(open_needs),
+                "top_open_needs": [
+                    {"need_id": n.need_id, "title": n.title, "urgency": n.urgency}
+                    for n in open_needs[:3]
+                ],
+            }
+        )
     return output
 
 
-async def _open_blockers_ranked(
-    session: AsyncSession, today: date
-) -> list[dict[str, Any]]:
+async def _open_blockers_ranked(session: AsyncSession, today: date) -> list[dict[str, Any]]:
     """Open blockers ranked by severity (critical first) then age (oldest first)."""
     severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
@@ -184,16 +188,18 @@ async def _open_blockers_ranked(
     items = []
     for r in rows:
         age = (today - date.fromisoformat(str(r.date_opened))).days
-        items.append({
-            "risk_id": r.risk_id,
-            "title": r.title,
-            "risk_type": r.risk_type,
-            "severity": r.severity,
-            "escalation_status": r.escalation_status,
-            "owner": r.owner,
-            "age_days": age,
-            "_sort_key": (severity_order.get(r.severity, 9), -age),
-        })
+        items.append(
+            {
+                "risk_id": r.risk_id,
+                "title": r.title,
+                "risk_type": r.risk_type,
+                "severity": r.severity,
+                "escalation_status": r.escalation_status,
+                "owner": r.owner,
+                "age_days": age,
+                "_sort_key": (severity_order.get(r.severity, 9), -age),
+            }
+        )
 
     items.sort(key=lambda x: x["_sort_key"])
     # Remove sort key from output
@@ -202,14 +208,14 @@ async def _open_blockers_ranked(
     return items
 
 
-async def _pending_decisions(
-    session: AsyncSession, today: date
-) -> list[dict[str, Any]]:
+async def _pending_decisions(session: AsyncSession, today: date) -> list[dict[str, Any]]:
     """Pending decisions, oldest first."""
     result = await session.execute(
-        select(DecisionTable).where(
+        select(DecisionTable)
+        .where(
             DecisionTable.status == "pending",
-        ).order_by(DecisionTable.created_at)
+        )
+        .order_by(DecisionTable.created_at)
     )
     rows = result.scalars().all()
     return [
@@ -218,7 +224,8 @@ async def _pending_decisions(
             "title": r.title,
             "approvers": r.approvers or "[]",
             "age_days": (today - date.fromisoformat(str(r.created_at)[:10])).days
-            if r.created_at else None,
+            if r.created_at
+            else None,
         }
         for r in rows
     ]

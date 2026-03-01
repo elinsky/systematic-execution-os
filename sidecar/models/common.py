@@ -2,13 +2,13 @@
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field
 
+from pydantic import BaseModel, ConfigDict, Field
 
 # ---------------------------------------------------------------------------
 # Base model
 # ---------------------------------------------------------------------------
+
 
 class SidecarBaseModel(BaseModel):
     """Root Pydantic base for all sidecar domain models.
@@ -27,6 +27,7 @@ class SidecarBaseModel(BaseModel):
 # ---------------------------------------------------------------------------
 # Shared enums
 # ---------------------------------------------------------------------------
+
 
 class HealthStatus(StrEnum):
     GREEN = "green"
@@ -61,6 +62,7 @@ class BusinessImpact(StrEnum):
 # Shared base for records with Asana GID
 # ---------------------------------------------------------------------------
 
+
 class AsanaLinkedRecord(SidecarBaseModel):
     """Base for sidecar records that mirror an Asana object.
 
@@ -69,15 +71,15 @@ class AsanaLinkedRecord(SidecarBaseModel):
     See design-review.md P3 recommendation.
     """
 
-    asana_gid: Optional[str] = Field(
+    asana_gid: str | None = Field(
         default=None,
         description="Asana global ID for the mirrored object. "
-                    "Non-nullable once synced; None only before first Asana write.",
+        "Non-nullable once synced; None only before first Asana write.",
     )
-    asana_synced_at: Optional[datetime] = Field(
+    asana_synced_at: datetime | None = Field(
         default=None,
         description="Timestamp of last successful sync with Asana.",
     )
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    archived_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    archived_at: datetime | None = None

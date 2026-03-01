@@ -6,8 +6,6 @@ Once status=DECIDED, the record is immutable via update.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import structlog
 
 from sidecar.models.decision import Decision, DecisionCreate, DecisionResolve, DecisionStatus
@@ -20,13 +18,13 @@ class DecisionService:
     def __init__(self, repo: DecisionRepository) -> None:
         self._repo = repo
 
-    async def get(self, decision_id: str) -> Optional[Decision]:
+    async def get(self, decision_id: str) -> Decision | None:
         return await self._repo.get(decision_id)
 
     async def list(
         self,
-        status: Optional[DecisionStatus] = None,
-        project_id: Optional[str] = None,
+        status: DecisionStatus | None = None,
+        project_id: str | None = None,
     ) -> list[Decision]:
         return await self._repo.list(status=status, project_id=project_id)
 
@@ -57,7 +55,9 @@ class DecisionService:
         )
         return decision
 
-    async def supersede(self, decision_id: str, new_decision: DecisionCreate) -> tuple[Decision, Decision]:
+    async def supersede(
+        self, decision_id: str, new_decision: DecisionCreate
+    ) -> tuple[Decision, Decision]:
         """Create a new decision and mark the old one as superseded.
 
         Returns (new_decision, superseded_decision).

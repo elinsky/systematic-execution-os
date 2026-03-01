@@ -20,7 +20,8 @@ Cron expressions (from Settings):
 
 from __future__ import annotations
 
-from typing import Any, Callable, Coroutine
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 import structlog
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -57,14 +58,15 @@ def start_scheduler(settings: Settings, session_factory: Any) -> AsyncIOSchedule
         The running AsyncIOScheduler instance.
     """
     from sidecar.automation.daily_digest import run_daily_digest
-    from sidecar.automation.weekly_review_prep import run_weekly_review_prep
     from sidecar.automation.milestone_watch import run_milestone_watch
     from sidecar.automation.pm_health_watch import run_pm_health_watch
+    from sidecar.automation.weekly_review_prep import run_weekly_review_prep
 
     scheduler = get_scheduler()
 
     def _wrap(job_fn: Callable[..., Coroutine]) -> Callable:
         """Wrap a job so it catches all exceptions and logs them."""
+
         async def _safe_job():
             job_name = job_fn.__name__
             logger.info("job_start", job=job_name)
@@ -73,6 +75,7 @@ def start_scheduler(settings: Settings, session_factory: Any) -> AsyncIOSchedule
                 logger.info("job_complete", job=job_name)
             except Exception as exc:
                 logger.error("job_failed", job=job_name, error=str(exc), exc_info=True)
+
         _safe_job.__name__ = job_fn.__name__
         return _safe_job
 

@@ -19,12 +19,14 @@ All methods raise:
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from datetime import date
-from typing import Any, AsyncIterator
+from typing import Any
 
 import structlog
 
 from sidecar.models import (
+    BusinessImpact,
     Milestone,
     MilestoneConfidence,
     MilestoneStatus,
@@ -36,16 +38,16 @@ from sidecar.models import (
     RiskBlocker,
     RiskSeverity,
     RiskType,
-    BusinessImpact,
     Urgency,
 )
+
 from .client import (
-    AsanaClient,
     MILESTONE_OPT_FIELDS,
     PROJECT_OPT_FIELDS,
     TASK_OPT_FIELDS,
+    AsanaClient,
 )
-from .mapper import AsanaFieldConfig, AsanaMapper
+from .mapper import AsanaMapper
 
 logger = structlog.get_logger(__name__)
 
@@ -150,9 +152,7 @@ class AsanaCRUD:
         params: dict[str, Any] = {"opt_fields": TASK_OPT_FIELDS}
         if completed is not None:
             params["completed_since"] = "now" if not completed else ""
-        async for item in self._client.paginate(
-            f"projects/{project_gid}/tasks", params=params
-        ):
+        async for item in self._client.paginate(f"projects/{project_gid}/tasks", params=params):
             yield item
 
     # ------------------------------------------------------------------
@@ -177,9 +177,7 @@ class AsanaCRUD:
         logger.info("asana_section_created", project_gid=project_gid, name=name)
         return data
 
-    async def move_task_to_section(
-        self, section_gid: str, task_gid: str
-    ) -> None:
+    async def move_task_to_section(self, section_gid: str, task_gid: str) -> None:
         """Move a task into a section (Kanban column move)."""
         await self._client.post(
             f"sections/{section_gid}/addTask",
@@ -196,9 +194,7 @@ class AsanaCRUD:
             params={"opt_fields": TASK_OPT_FIELDS},
         )
 
-    async def update_task(
-        self, task_gid: str, updates: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def update_task(self, task_gid: str, updates: dict[str, Any]) -> dict[str, Any]:
         """Patch a task with arbitrary field updates."""
         data = await self._client.patch(f"tasks/{task_gid}", updates)
         logger.info("asana_task_updated", gid=task_gid)
@@ -207,9 +203,7 @@ class AsanaCRUD:
     async def complete_task(self, task_gid: str) -> dict[str, Any]:
         return await self.update_task(task_gid, {"completed": True})
 
-    async def set_task_external_id(
-        self, task_gid: str, external_id: str
-    ) -> None:
+    async def set_task_external_id(self, task_gid: str, external_id: str) -> None:
         """Store the sidecar's internal ID in the Asana task's external.id field.
 
         This enables idempotent lookup: given a sidecar ID, fetch the matching
@@ -232,9 +226,7 @@ class AsanaCRUD:
                 reason=str(exc),
             )
 
-    async def add_task_dependency(
-        self, task_gid: str, dependency_gid: str
-    ) -> None:
+    async def add_task_dependency(self, task_gid: str, dependency_gid: str) -> None:
         """Mark task_gid as depending on dependency_gid."""
         await self._client.post(
             f"tasks/{task_gid}/addDependencies",
@@ -304,9 +296,7 @@ class AsanaCRUD:
     ) -> PMNeed:
         cfg = self._mapper._cfg
         if not cfg.pm_needs_project_gid:
-            raise RuntimeError(
-                "pm_needs_project_gid not set in AsanaFieldConfig."
-            )
+            raise RuntimeError("pm_needs_project_gid not set in AsanaFieldConfig.")
         body = self._mapper.to_asana_pm_need(
             title=title,
             category=category,
@@ -387,9 +377,7 @@ class AsanaCRUD:
             acceptance_criteria=acceptance_criteria,
         )
         data = await self._client.post("tasks", body)
-        await self.set_task_external_id(
-            data["gid"], f"sidecar:milestone:{milestone_id}"
-        )
+        await self.set_task_external_id(data["gid"], f"sidecar:milestone:{milestone_id}")
         logger.info(
             "asana_milestone_created",
             gid=data["gid"],
@@ -408,9 +396,7 @@ class AsanaCRUD:
         cfg = self._mapper._cfg
         updates: dict[str, Any] = {}
         if cfg.milestone_confidence_gid:
-            updates["custom_fields"] = {
-                cfg.milestone_confidence_gid: confidence.value
-            }
+            updates["custom_fields"] = {cfg.milestone_confidence_gid: confidence.value}
         data = await self.update_task(task_gid, updates)
         return self._mapper.from_asana_milestone(data, milestone_id, project_id)
 
@@ -443,9 +429,7 @@ class AsanaCRUD:
             "opt_fields": MILESTONE_OPT_FIELDS,
             "resource_subtype": "milestone",
         }
-        async for item in self._client.paginate(
-            f"projects/{project_gid}/tasks", params=params
-        ):
+        async for item in self._client.paginate(f"projects/{project_gid}/tasks", params=params):
             # Asana doesn't filter by subtype server-side in all plans;
             # filter client-side as a safety net.
             if item.get("resource_subtype") == "milestone":
@@ -572,8 +556,7 @@ class AsanaCRUD:
         Returns list of created task dicts.
         """
         ops = [
-            {"method": "POST", "relative_path": "/tasks", "data": body}
-            for body in task_bodies[:10]
+            {"method": "POST", "relative_path": "/tasks", "data": body} for body in task_bodies[:10]
         ]
         results = await self._client.batch(ops)
         created = []

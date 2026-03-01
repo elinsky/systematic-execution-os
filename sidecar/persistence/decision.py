@@ -9,7 +9,6 @@ Source of truth: Sidecar-only. Append-only semantics:
 from __future__ import annotations
 
 import json
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,7 +22,7 @@ from sidecar.models.decision import (
     DecisionStatus,
     ImpactedArtifact,
 )
-from sidecar.persistence.base import decode_list, encode_list, encode_json, decode_json
+from sidecar.persistence.base import decode_list, encode_list
 
 
 def _decode_impacted_artifacts(value: str) -> list[ImpactedArtifact]:
@@ -58,7 +57,7 @@ class DecisionRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get(self, decision_id: str) -> Optional[Decision]:
+    async def get(self, decision_id: str) -> Decision | None:
         result = await self._session.execute(
             select(DecisionTable).where(DecisionTable.decision_id == decision_id)
         )
@@ -67,8 +66,8 @@ class DecisionRepository:
 
     async def list(
         self,
-        status: Optional[DecisionStatus] = None,
-        project_id: Optional[str] = None,
+        status: DecisionStatus | None = None,
+        project_id: str | None = None,
     ) -> list[Decision]:
         stmt = select(DecisionTable)
         if status is not None:
@@ -79,7 +78,8 @@ class DecisionRepository:
         # Filter by project_id in Python (stored in impacted_artifacts)
         if project_id is not None:
             decisions = [
-                d for d in decisions
+                d
+                for d in decisions
                 if any(
                     a.artifact_type == ArtifactType.PROJECT and a.artifact_id == project_id
                     for a in d.impacted_artifacts
@@ -108,7 +108,7 @@ class DecisionRepository:
         await self._session.refresh(row)
         return _row_to_model(row)
 
-    async def resolve(self, data: DecisionResolve) -> Optional[Decision]:
+    async def resolve(self, data: DecisionResolve) -> Decision | None:
         """Record the outcome of a pending decision.
 
         Only PENDING decisions may be resolved (D3).
@@ -131,7 +131,7 @@ class DecisionRepository:
         await self._session.refresh(row)
         return _row_to_model(row)
 
-    async def supersede(self, decision_id: str, superseded_by_id: str) -> Optional[Decision]:
+    async def supersede(self, decision_id: str, superseded_by_id: str) -> Decision | None:
         """Mark a decision as superseded by a new one."""
         result = await self._session.execute(
             select(DecisionTable).where(DecisionTable.decision_id == decision_id)
