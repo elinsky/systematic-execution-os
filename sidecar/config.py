@@ -10,8 +10,8 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # ── Asana credentials ──────────────────────────────────────────────────────
-    asana_personal_access_token: str = Field(description="Asana personal access token")
-    asana_workspace_gid: str = Field(description="Asana workspace GID")
+    asana_personal_access_token: str = Field(default="", description="Asana personal access token")
+    asana_workspace_gid: str = Field(default="", description="Asana workspace GID")
 
     # ── Asana project GIDs ─────────────────────────────────────────────────────
     asana_pm_needs_project_gid: str = ""
