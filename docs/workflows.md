@@ -1,8 +1,15 @@
 # BAM Systematic Execution OS — Workflows & Operating Cadences
 
-**Version:** 1.0
+**Version:** 1.1
 **Date:** 2026-03-01
 **Scope:** v1 Operating System (Asana + lightweight sidecar)
+**Status:** Final — reflects post-review corrections from `docs/design-decisions.md`
+
+**Post-review corrections incorporated:**
+- D1: PM Need `status` is read-only in sidecar; Asana section is canonical. Bot intake workflow updated accordingly.
+- D2: PM Coverage `onboarding_stage` and `health_status` written via Asana Kanban, not sidecar API.
+- D3: Decision immutability — `PATCH` only works on `pending` decisions; `POST /decisions/{id}/resolve` is the only path to close.
+- D5: `top_open_need_ids` / `top_blocker_ids` removed from PMCoverageRecord; computed on read.
 
 ---
 

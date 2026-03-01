@@ -1,8 +1,17 @@
 # BAM Systematic Execution OS — Architecture
 
-> Document version: 1.0
+> Document version: 1.1
 > Date: 2026-03-01
-> Status: Initial design — pending team review
+> Status: Final — P0 corrections applied per `docs/design-decisions.md`
+
+**Post-review corrections incorporated in this version:**
+- D2: PMCoverageRecord write path — `onboarding_stage` and `health_status` written via Asana Kanban; all other fields writable via sidecar API
+- D5: Removed `top_open_need_ids` / `top_blocker_ids` from PMCoverageRecord schema (computed on read)
+- D6: SyncState machine simplified to `asana_gid` + `asana_synced_at` only; hourly incremental poll added
+- D7: `age_days` on RiskBlocker computed on read, never stored or written to Asana
+- D8: `GET /health` endpoint added; sidecar starts in read-only mode if Asana unreachable at startup
+- `PATCH /projects/{project_id}` endpoint added to API minimum set (required for bot health update command)
+- `GET /operating-review/agenda` is read-only and stateless; no StatusUpdate created by the HTTP endpoint
 
 ---
 

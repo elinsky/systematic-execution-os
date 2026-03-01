@@ -2,9 +2,8 @@
 
 > Reviewer: Devil's Advocate / Design Review Agent
 > Date: 2026-03-01
-> Status: Initial review — for team discussion before implementation begins
-> Documents reviewed: vision.md, docs/architecture.md, docs/asana-mapping.md, docs/domain-models.md (partial)
-> Note: docs/workflows.md became available during review and was incorporated. Review is based on all four design documents plus the vision.
+> Status: Final review — for team discussion before implementation begins
+> Documents reviewed: vision.md, docs/architecture.md, docs/asana-mapping.md, docs/domain-models.md, docs/workflows.md, docs/api-design.md
 
 ---
 
@@ -357,7 +356,57 @@ The vision includes a Stakeholder Map as a v2 artifact, but notes it is "Optiona
 
 ---
 
-## 9. Recommendations (Prioritized)
+## 9. API Design Issues
+
+### Findings from docs/api-design.md
+
+**[POSITIVE] `POST /decisions/{decision_id}/resolve` as a separate endpoint**
+
+The API design uses a dedicated `POST /decisions/{decision_id}/resolve` endpoint rather than a generic `PATCH /decisions/{decision_id}` for recording decision outcomes. This is the right pattern: it enforces intent (resolving is a state transition, not a field patch), makes the audit trail cleaner, and naturally prevents resolving a decision twice via idempotency checks. This aligns with the "append-only" architecture intent and should be extended as a model for other high-consequence state transitions (e.g., consider `POST /risks/{risk_id}/escalate` rather than `PATCH /risks/{risk_id}` for escalation).
+
+---
+
+**[HIGH] `PATCH /projects/{project_id}` is missing from the API spec**
+
+The bot command spec includes `/update-health [project] [green|yellow|red]` which maps to `PATCH /projects/{project_id}`. However, the Projects section of the API spec (Section 3) defines only `GET /projects`, `GET /projects/{project_id}`, and `GET /projects/{project_id}/milestones` — no PATCH endpoint. This is an incomplete API spec.
+
+**Recommendation:** Add `PATCH /projects/{project_id}` with a `ProjectUpdate` request body (health, status, owner) to the API spec before implementation begins. This is a required endpoint for the bot to function.
+
+---
+
+**[HIGH] `GET /operating-review/agenda` has no caching or idempotency spec**
+
+The agenda endpoint auto-generates the weekly operating review. If two users call `/weekly-review` simultaneously (or if the endpoint is called twice by the scheduler), two separate agenda generations execute in parallel. Each reads the same DB state and may each write a `StatusUpdate` record — resulting in duplicates. The existing idempotency recommendation (Section 8, weekly review prep) applies here but specifically at the HTTP layer too.
+
+**Recommendation:** The `GET /operating-review/agenda` endpoint should be read-only and stateless — it should not write anything (no `StatusUpdate` record created). If the agenda needs to be persisted for the Slack post, that persistence should be done by the `weekly_review_prep.py` job, not by the HTTP endpoint. The endpoint should always return the current live state, making it naturally idempotent.
+
+---
+
+**[MEDIUM] Concurrent scheduled jobs can collectively exhaust the Asana API rate budget**
+
+The API spec and architecture both note that there is no inbound rate limiting on the sidecar's REST API in v1 ("low traffic, internal service"). However, the scheduled automation jobs — daily digest, weekly review prep, milestone watch, and orphan detection — all call the Asana API. If multiple jobs fire in close succession (e.g., all scheduled at 08:00), the collective outbound Asana API call volume could spike. The asana-mapping doc sets `max_requests_per_minute = 1400`, but there is no coordination between APScheduler jobs to share that budget.
+
+**Recommendation:** Add a shared `AsanaRateLimiter` singleton that all jobs and API handlers share when calling the Asana client. Jobs should acquire rate limit tokens from this shared pool rather than each managing their own throttle. This prevents the daily digest job from starving the webhook handler of its API budget during a sync spike.
+
+---
+
+**[MEDIUM] Bot command `/new-pm` maps to `POST /pm-coverage` + `POST /projects` but the API spec shows no atomicity guarantee**
+
+The bot `/new-pm` flow (Section: Bot Command Spec) calls `POST /pm-coverage` then `POST /projects` (template instantiation). These are two separate API calls with no transaction boundary. If `POST /pm-coverage` succeeds but `POST /projects` fails (Asana timeout, rate limit), the system is left with a PM Coverage record that has no associated onboarding project.
+
+**Recommendation:** Introduce a `POST /pm-onboarding` composite endpoint that wraps both operations in a single service call with compensating rollback logic (the saga pattern recommended in Section 4 for template instantiation). The bot should call the composite endpoint, not two separate endpoints.
+
+---
+
+**[LOW] `GET /health` response does not include last successful sync time**
+
+The health endpoint returns `{"status": "ok", "db": "connected", "asana": "reachable", "scheduler": "running"}`. This tells operators the service is alive but not whether it is current. A sidecar that is running but hasn't synced from Asana in 18 hours looks identical to one that synced 5 minutes ago.
+
+**Recommendation:** Add `"last_sync_at": "2026-03-01T07:42:00Z"` and `"last_job_run_at": "2026-03-01T08:00:00Z"` to the `GET /health` response. This makes data freshness visible at a glance and enables automated staleness monitoring.
+
+---
+
+## 10. Recommendations (Prioritized)
 
 ### Must fix before implementation begins
 
@@ -367,11 +416,13 @@ The vision includes a Stakeholder Map as a v2 artifact, but notes it is "Optiona
 | P0 | PM Coverage SoT contradiction | Document explicit write path: Asana section for stage/health, sidecar API for all other fields |
 | P0 | Decision "append-only" vs PATCH contradiction | Immutable once decided; only pending decisions are patchable; enforce in validation layer |
 | P0 | Webhook handler in-process reliability vs APScheduler gap | Explicitly choose: sync processing in v1 (accept 10-second latency), async queue in v2 |
+| P0 | `PATCH /projects/{project_id}` missing from API spec | Add ProjectUpdate endpoint; bot `/update-health` command requires it |
 | P1 | Remove `top_open_need_ids` / `top_blocker_ids` from PMCoverageRecord schema | Compute on read; avoid fan-out update complexity |
 | P1 | Add job failure alerting watchdog | Hourly check of job_run table; alert on failures or missed job windows |
 | P1 | Escalation on orphaned critical Asana objects | Alert (not just log) when PM Coverage tasks or go-live milestones are orphaned |
 | P1 | Sidecar startup degraded mode for Asana unavailability | Read-only mode when Asana unreachable; `GET /health` endpoint |
 | P1 | `Age (Days)` writeback: compute on read instead | Remove S→A daily batch writeback; compute dynamically in sidecar query layer |
+| P1 | `/new-pm` bot flow: composite endpoint with rollback | `POST /pm-onboarding` wrapping PM Coverage + template instantiation in one saga |
 
 ### Should fix before v1 release
 
@@ -384,13 +435,16 @@ The vision includes a Stakeholder Map as a v2 artifact, but notes it is "Optiona
 | P2 | SQLite WAL mode in code | Enforce `PRAGMA journal_mode=WAL` in `database.py` startup |
 | P2 | PM Need archival policy | Define Asana archival for delivered/cancelled needs at 90 days |
 | P2 | Onboarding state transition guard | `validate_onboarding_transition()` with side effects (auto-open RiskBlocker on backwards moves) |
-| P2 | Weekly review prep idempotency | Check for existing agenda before creating; use scope+week key |
-| P3 | `possible_duplicate_of` on PMNeed | Manual triage field; auto-detection in v2 |
+| P2 | Weekly review prep idempotency | `GET /operating-review/agenda` must be read-only; persistence done by scheduled job only |
+| P2 | Shared Asana rate limiter across jobs and handlers | Single `AsanaRateLimiter` singleton prevents job vs. webhook handler budget starvation |
+| P2 | `GET /health` data freshness fields | Add `last_sync_at` and `last_job_run_at` to health response |
 | P2 | Cold-start / backfill procedure doc | Explicit order-of-operations for first sync from existing Asana workspace |
 | P2 | Separate API keys per consumer | Scheduled jobs key, bot key; source logged in audit trail |
+| P3 | `possible_duplicate_of` on PMNeed | Manual triage field; auto-detection in v2 |
 | P3 | SyncState enum: defer to v2 | Replace with `asana_gid` + `asana_synced_at` only in v1 |
 | P3 | Decisions registry: simplify in v1 | Asana Decision Log only; minimal sidecar endpoint for query; full registry in v2 |
 | P3 | Lightweight stakeholder config file | YAML config for escalation contacts; not a DB object in v1 |
+| P3 | Use `POST /risks/{risk_id}/escalate` pattern | Model specific state transitions as dedicated endpoints rather than generic PATCH (follow `resolve` pattern) |
 
 ### Can defer to v2
 
