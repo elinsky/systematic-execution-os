@@ -226,15 +226,9 @@ class AsanaMapper:
         if notes:
             body["notes"] = notes
 
-        custom_fields: dict[str, str] = {}
-        if self._cfg.need_category_gid:
-            custom_fields[self._cfg.need_category_gid] = category.value
-        if self._cfg.urgency_gid:
-            custom_fields[self._cfg.urgency_gid] = urgency.value
-        if self._cfg.business_impact_gid:
-            custom_fields[self._cfg.business_impact_gid] = business_impact.value
-        if custom_fields:
-            body["custom_fields"] = custom_fields
+        # Note: Asana enum custom field values require enum option GIDs (not name strings).
+        # GIDs are workspace-specific and fetched at sync time. Custom fields are populated
+        # via pull-sync from Asana, not written here at task creation.
 
         return body
 
@@ -296,11 +290,8 @@ class AsanaMapper:
         if notes:
             body["notes"] = notes
 
-        custom_fields: dict[str, str] = {}
-        if self._cfg.project_type_gid:
-            custom_fields[self._cfg.project_type_gid] = project_type.value
-        if custom_fields:
-            body["custom_fields"] = custom_fields
+        # Note: custom fields cannot be set at project creation time unless already
+        # attached to the project. Set project_type via PATCH after creation if needed.
 
         return body
 
@@ -412,13 +403,8 @@ class AsanaMapper:
         if mitigation_plan:
             body["notes"] = mitigation_plan
 
-        custom_fields: dict[str, str] = {}
-        if self._cfg.risk_type_gid:
-            custom_fields[self._cfg.risk_type_gid] = risk_type.value
-        if self._cfg.severity_gid:
-            custom_fields[self._cfg.severity_gid] = severity.value
-        if custom_fields:
-            body["custom_fields"] = custom_fields
+        # Note: Asana enum custom field values require enum option GIDs (not name strings).
+        # Custom fields are populated via pull-sync from Asana after task creation.
 
         return body
 

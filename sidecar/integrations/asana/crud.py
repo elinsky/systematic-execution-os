@@ -333,19 +333,24 @@ class AsanaCRUD:
         pm_id: str,
         urgency: Urgency | None = None,
         business_impact: BusinessImpact | None = None,
+        enum_option_gids: dict[str, str] | None = None,
     ) -> PMNeed:
-        cfg = self._mapper._cfg
-        custom_fields: dict[str, str] = {}
-        if urgency is not None and cfg.urgency_gid:
-            custom_fields[cfg.urgency_gid] = urgency.value
-        if business_impact is not None and cfg.business_impact_gid:
-            custom_fields[cfg.business_impact_gid] = business_impact.value
+        """Update PM Need custom fields.
 
+        ``enum_option_gids`` must map field_gid → enum_option_gid. Asana enum
+        fields require the option GID (not the option name/value string). Callers
+        should look up option GIDs from ``GET /custom_fields/{gid}`` once and cache.
+
+        If ``enum_option_gids`` is not provided, custom fields are not updated.
+        """
         updates: dict[str, Any] = {}
-        if custom_fields:
-            updates["custom_fields"] = custom_fields
+        if enum_option_gids:
+            updates["custom_fields"] = enum_option_gids
 
-        data = await self.update_task(task_gid, updates)
+        if updates:
+            data = await self.update_task(task_gid, updates)
+        else:
+            data = await self.get_task(task_gid)
         return self._mapper.from_asana_pm_need(data, pm_need_id, pm_id)
 
     # ------------------------------------------------------------------
@@ -546,7 +551,7 @@ class AsanaCRUD:
             {
                 "method": "POST",
                 "relative_path": f"/projects/{project_gid}/sections",
-                "data": {"name": name, "project": project_gid},
+                "data": {"name": name},
             }
             for name in section_names[:10]
         ]

@@ -326,6 +326,16 @@ async def main() -> None:
             )
             env_lines.append(f"{proj_def['env_key']}={proj_gid}")
             await _ensure_sections(client, proj_gid, proj_def["sections"])
+            # Attach required custom fields so tasks can use them
+            field_suffixes = proj_def.get("custom_fields", [])
+            if field_suffixes:
+                print(f"  -- Attaching custom fields to {proj_def['name']} --")
+                field_gids_to_attach = [
+                    field_gids[suffix]
+                    for suffix in field_suffixes
+                    if suffix in field_gids
+                ]
+                await _ensure_custom_fields_attached(client, proj_gid, field_gids_to_attach)
 
         # ── Print .env lines ───────────────────────────────────────────────
         print("\n\n" + "=" * 60)
