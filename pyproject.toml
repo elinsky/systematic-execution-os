@@ -37,9 +37,14 @@ dev = [
     "ruff>=0.4.0",
     "mypy>=1.10.0",
 ]
+agent = [
+    "claude-agent-sdk>=0.1.0",
+    "anthropic>=0.40.0",
+    "anyio>=4.0.0",
+]
 
 [tool.hatch.build.targets.wheel]
-packages = ["sidecar"]
+packages = ["sidecar", "agent"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -55,7 +60,7 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 ignore = ["E501", "B008"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["sidecar"]
+known-first-party = ["sidecar", "agent"]
 
 [tool.mypy]
 python_version = "3.11"
