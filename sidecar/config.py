@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     # ── Asana credentials ──────────────────────────────────────────────────────
     asana_personal_access_token: str = Field(default="", description="Asana personal access token")
     asana_workspace_gid: str = Field(default="", description="Asana workspace GID")
+    asana_webhook_secret: str = Field(default="", description="Asana webhook HMAC secret")
 
     # ── Asana project GIDs ─────────────────────────────────────────────────────
     asana_pm_needs_project_gid: str = ""

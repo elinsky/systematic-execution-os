@@ -17,6 +17,7 @@ from sidecar.api import (  # noqa: E402
     projects,
     reports,
     risks,
+    webhooks,
 )
 
 router.include_router(pm_coverage.router, prefix="/pm-coverage", tags=["pm-coverage"])
@@ -30,3 +31,4 @@ router.include_router(
     operating_review.router, prefix="/operating-review", tags=["operating-review"]
 )
 router.include_router(reports.router, prefix="/reports", tags=["reports"])
+router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
