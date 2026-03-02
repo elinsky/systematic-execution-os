@@ -51,9 +51,18 @@ async def get_pm_coverage(args: dict) -> dict:
     "Requires pm_id (e.g. 'pm-jane-doe') and pm_name (e.g. 'Jane Doe'). "
     "Optional: team_or_pod, strategy_type, region, coverage_owner, "
     "onboarding_stage, go_live_target_date (YYYY-MM-DD), health_status, notes.",
-    {"pm_id": str, "pm_name": str, "team_or_pod": str, "strategy_type": str,
-     "region": str, "coverage_owner": str, "onboarding_stage": str,
-     "go_live_target_date": str, "health_status": str, "notes": str},
+    {
+        "pm_id": str,
+        "pm_name": str,
+        "team_or_pod": str,
+        "strategy_type": str,
+        "region": str,
+        "coverage_owner": str,
+        "onboarding_stage": str,
+        "go_live_target_date": str,
+        "health_status": str,
+        "notes": str,
+    },
 )
 async def create_pm_coverage(args: dict) -> dict:
     payload = {k: v for k, v in args.items() if v is not None}
@@ -72,9 +81,15 @@ async def create_pm_coverage(args: dict) -> dict:
     "Requires pm_id. Optional fields to update: onboarding_stage, health_status, "
     "go_live_target_date (YYYY-MM-DD), coverage_owner, last_touchpoint_date "
     "(YYYY-MM-DD), notes.",
-    {"pm_id": str, "onboarding_stage": str, "health_status": str,
-     "go_live_target_date": str, "coverage_owner": str,
-     "last_touchpoint_date": str, "notes": str},
+    {
+        "pm_id": str,
+        "onboarding_stage": str,
+        "health_status": str,
+        "go_live_target_date": str,
+        "coverage_owner": str,
+        "last_touchpoint_date": str,
+        "notes": str,
+    },
 )
 async def update_pm_coverage(args: dict) -> dict:
     pm_id = args.get("pm_id")

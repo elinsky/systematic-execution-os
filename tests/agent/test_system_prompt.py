@@ -12,9 +12,15 @@ class TestSystemPromptContent:
     # --- Onboarding stages ---
     def test_contains_all_onboarding_stages(self):
         stages = [
-            "pipeline", "pre_start", "requirements_discovery",
-            "onboarding_in_progress", "uat", "go_live_ready",
-            "live", "stabilization", "steady_state",
+            "pipeline",
+            "pre_start",
+            "requirements_discovery",
+            "onboarding_in_progress",
+            "uat",
+            "go_live_ready",
+            "live",
+            "stabilization",
+            "steady_state",
         ]
         for stage in stages:
             assert stage in SYSTEM_PROMPT, f"Missing onboarding stage: {stage}"
@@ -27,8 +33,15 @@ class TestSystemPromptContent:
     # --- Need categories ---
     def test_contains_need_categories(self):
         categories = [
-            "market_data", "historical_data", "alt_data", "execution",
-            "broker", "infra", "research", "ops", "other",
+            "market_data",
+            "historical_data",
+            "alt_data",
+            "execution",
+            "broker",
+            "infra",
+            "research",
+            "ops",
+            "other",
         ]
         for cat in categories:
             assert cat in SYSTEM_PROMPT, f"Missing need category: {cat}"
@@ -58,6 +71,5 @@ class TestSystemPromptContent:
 
     # --- Entity types ---
     def test_contains_entity_types(self):
-        for entity in ("PM Coverage", "PM Needs", "Projects", "Milestones",
-                        "Risks", "Decisions"):
+        for entity in ("PM Coverage", "PM Needs", "Projects", "Milestones", "Risks", "Decisions"):
             assert entity in SYSTEM_PROMPT, f"Missing entity: {entity}"

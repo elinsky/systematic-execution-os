@@ -15,8 +15,7 @@ from agent.tools._http import err, get, ok, post
     "List decisions. Optional filters: decision_status "
     "(pending|decided|superseded|deferred), project_id, "
     "pending_only (true/false), older_than_days (integer).",
-    {"decision_status": str, "project_id": str, "pending_only": str,
-     "older_than_days": str},
+    {"decision_status": str, "project_id": str, "pending_only": str, "older_than_days": str},
 )
 async def list_decisions(args: dict) -> dict:
     params = {}
@@ -57,8 +56,13 @@ async def create_decision(args: dict) -> dict:
     "will fail with 409. Requires: decision_id, chosen_path, rationale. "
     "Optional: approvers (comma-separated names), decision_date (YYYY-MM-DD, "
     "defaults to today).",
-    {"decision_id": str, "chosen_path": str, "rationale": str,
-     "approvers": str, "decision_date": str},
+    {
+        "decision_id": str,
+        "chosen_path": str,
+        "rationale": str,
+        "approvers": str,
+        "decision_date": str,
+    },
 )
 async def resolve_decision(args: dict) -> dict:
     for field in ("decision_id", "chosen_path", "rationale"):

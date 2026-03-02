@@ -14,8 +14,7 @@ from agent.tools._http import err, get, ok, patch
     "(green|yellow|red|unknown), project_type "
     "(pm_onboarding|capability_build|remediation|expansion|investigation), "
     "at_risk_only (true/false).",
-    {"pm_id": str, "project_status": str, "health": str, "project_type": str,
-     "at_risk_only": str},
+    {"pm_id": str, "project_status": str, "health": str, "project_type": str, "at_risk_only": str},
 )
 async def list_projects(args: dict) -> dict:
     params = {}
@@ -69,8 +68,15 @@ async def get_project_milestones(args: dict) -> dict:
     "(planning|active|on_hold|at_risk|complete|cancelled), health "
     "(green|yellow|red|unknown), priority (critical|high|medium|low), "
     "owner, target_date (YYYY-MM-DD), success_criteria.",
-    {"project_id": str, "status": str, "health": str, "priority": str,
-     "owner": str, "target_date": str, "success_criteria": str},
+    {
+        "project_id": str,
+        "status": str,
+        "health": str,
+        "priority": str,
+        "owner": str,
+        "target_date": str,
+        "success_criteria": str,
+    },
 )
 async def update_project(args: dict) -> dict:
     project_id = args.get("project_id")

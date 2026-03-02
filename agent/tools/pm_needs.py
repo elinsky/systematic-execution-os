@@ -17,8 +17,7 @@ from agent.tools._http import err, get, ok, patch, post
     "(market_data|historical_data|alt_data|execution|broker|infra|research|ops|other), "
     "urgency (immediate|this_week|this_month|next_quarter|backlog), "
     "unmet_only (true/false).",
-    {"pm_id": str, "need_status": str, "category": str, "urgency": str,
-     "unmet_only": str},
+    {"pm_id": str, "need_status": str, "category": str, "urgency": str, "unmet_only": str},
 )
 async def list_pm_needs(args: dict) -> dict:
     params = {}
@@ -57,9 +56,18 @@ async def get_pm_need(args: dict) -> dict:
     "Optional: urgency (immediate|this_week|this_month|next_quarter|backlog), "
     "business_impact (blocker|high|medium|low), problem_statement, "
     "business_rationale, desired_by_date (YYYY-MM-DD), notes.",
-    {"pm_id": str, "title": str, "category": str, "requested_by": str,
-     "urgency": str, "business_impact": str, "problem_statement": str,
-     "business_rationale": str, "desired_by_date": str, "notes": str},
+    {
+        "pm_id": str,
+        "title": str,
+        "category": str,
+        "requested_by": str,
+        "urgency": str,
+        "business_impact": str,
+        "problem_statement": str,
+        "business_rationale": str,
+        "desired_by_date": str,
+        "notes": str,
+    },
 )
 async def create_pm_need(args: dict) -> dict:
     for field in ("pm_id", "title", "category", "requested_by"):
@@ -83,9 +91,15 @@ async def create_pm_need(args: dict) -> dict:
     "Requires pm_need_id. Note: status is NOT writable — it is driven by Asana. "
     "Optional fields: urgency, business_impact, mapped_capability_id, "
     "linked_project_ids (comma-separated), resolution_path, notes.",
-    {"pm_need_id": str, "urgency": str, "business_impact": str,
-     "mapped_capability_id": str, "linked_project_ids": str,
-     "resolution_path": str, "notes": str},
+    {
+        "pm_need_id": str,
+        "urgency": str,
+        "business_impact": str,
+        "mapped_capability_id": str,
+        "linked_project_ids": str,
+        "resolution_path": str,
+        "notes": str,
+    },
 )
 async def update_pm_need(args: dict) -> dict:
     pm_need_id = args.get("pm_need_id")

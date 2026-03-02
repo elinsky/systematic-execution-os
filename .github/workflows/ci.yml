@@ -23,13 +23,13 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,agent]"
 
       - name: Lint
-        run: python3 -m ruff check sidecar/
+        run: python3 -m ruff check sidecar/ agent/
 
       - name: Format check
-        run: python3 -m ruff format --check sidecar/
+        run: python3 -m ruff format --check sidecar/ agent/
 
       - name: Tests
         run: python3 -m pytest tests/

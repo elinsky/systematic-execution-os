@@ -12,8 +12,7 @@ from agent.tools._http import err, get, ok, patch
     "List milestones. Optional filters: project_id, milestone_status "
     "(not_started|in_progress|at_risk|complete|missed|deferred), "
     "at_risk_only (true/false), due_within_days (integer).",
-    {"project_id": str, "milestone_status": str, "at_risk_only": str,
-     "due_within_days": str},
+    {"project_id": str, "milestone_status": str, "at_risk_only": str, "due_within_days": str},
 )
 async def list_milestones(args: dict) -> dict:
     params = {}
@@ -34,8 +33,15 @@ async def list_milestones(args: dict) -> dict:
     "(not_started|in_progress|at_risk|complete|missed|deferred), confidence "
     "(high|medium|low|unknown), target_date (YYYY-MM-DD), owner, "
     "acceptance_criteria, notes.",
-    {"milestone_id": str, "status": str, "confidence": str,
-     "target_date": str, "owner": str, "acceptance_criteria": str, "notes": str},
+    {
+        "milestone_id": str,
+        "status": str,
+        "confidence": str,
+        "target_date": str,
+        "owner": str,
+        "acceptance_criteria": str,
+        "notes": str,
+    },
 )
 async def update_milestone(args: dict) -> dict:
     milestone_id = args.get("milestone_id")

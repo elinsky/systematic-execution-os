@@ -10,6 +10,7 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _mock_response(json_data, status_code=200):
     """Create a mock httpx.Response (sync methods like .json() and .raise_for_status())."""
     resp = MagicMock()
@@ -18,6 +19,7 @@ def _mock_response(json_data, status_code=200):
     resp.is_success = 200 <= status_code < 300
     if status_code >= 400:
         from httpx import HTTPStatusError, Request, Response
+
         real_resp = Response(status_code, request=Request("GET", "http://test"))
         resp.raise_for_status.side_effect = HTTPStatusError(
             "error", request=real_resp.request, response=real_resp
@@ -45,6 +47,7 @@ async def _call(tool_obj, args):
 # PM Coverage
 # ---------------------------------------------------------------------------
 
+
 class TestListPMCoverage:
     @pytest.mark.asyncio
     async def test_list_all(self):
@@ -53,6 +56,7 @@ class TestListPMCoverage:
         mock_cl = _mock_client(mock_resp)
         with patch("agent.tools._http._client", return_value=mock_cl):
             from agent.tools.pm_coverage import list_pm_coverage
+
             result = await _call(list_pm_coverage, {"stage": "", "health": ""})
         assert not result.get("isError")
         assert "pm-test" in result["content"][0]["text"]
@@ -64,6 +68,7 @@ class TestListPMCoverage:
         mock_cl = _mock_client(mock_resp)
         with patch("agent.tools._http._client", return_value=mock_cl):
             from agent.tools.pm_coverage import list_pm_coverage
+
             result = await _call(list_pm_coverage, {"stage": "live", "health": "green"})
         assert not result.get("isError")
         mock_cl.get.assert_called_once()
@@ -84,6 +89,7 @@ class TestGetPMCoverage:
         mock_cl = _mock_client(mock_resp)
         with patch("agent.tools._http._client", return_value=mock_cl):
             from agent.tools.pm_coverage import get_pm_coverage
+
             result = await _call(get_pm_coverage, {"pm_id": "pm-test"})
         assert not result.get("isError")
         assert "pm-test" in result["content"][0]["text"]
@@ -91,6 +97,7 @@ class TestGetPMCoverage:
     @pytest.mark.asyncio
     async def test_get_missing_id(self):
         from agent.tools.pm_coverage import get_pm_coverage
+
         result = await _call(get_pm_coverage, {})
         assert result.get("isError")
 
@@ -103,15 +110,21 @@ class TestCreatePMCoverage:
         mock_cl = _mock_client(mock_resp)
         with patch("agent.tools._http._client", return_value=mock_cl):
             from agent.tools.pm_coverage import create_pm_coverage
-            result = await _call(create_pm_coverage, {
-                "pm_id": "pm-new", "pm_name": "New PM",
-            })
+
+            result = await _call(
+                create_pm_coverage,
+                {
+                    "pm_id": "pm-new",
+                    "pm_name": "New PM",
+                },
+            )
         assert not result.get("isError")
         assert "pm-new" in result["content"][0]["text"]
 
     @pytest.mark.asyncio
     async def test_create_missing_fields(self):
         from agent.tools.pm_coverage import create_pm_coverage
+
         result = await _call(create_pm_coverage, {"pm_id": "pm-test"})
         assert result.get("isError")
 
@@ -119,6 +132,7 @@ class TestCreatePMCoverage:
 # ---------------------------------------------------------------------------
 # PM Needs
 # ---------------------------------------------------------------------------
+
 
 class TestCreatePMNeed:
     @pytest.mark.asyncio
@@ -128,12 +142,16 @@ class TestCreatePMNeed:
         mock_cl = _mock_client(mock_resp)
         with patch("agent.tools._http._client", return_value=mock_cl):
             from agent.tools.pm_needs import create_pm_need
-            result = await _call(create_pm_need, {
-                "pm_id": "pm-test",
-                "title": "Test need",
-                "category": "market_data",
-                "requested_by": "Tester",
-            })
+
+            result = await _call(
+                create_pm_need,
+                {
+                    "pm_id": "pm-test",
+                    "title": "Test need",
+                    "category": "market_data",
+                    "requested_by": "Tester",
+                },
+            )
         assert not result.get("isError")
         # Verify the posted payload includes auto-generated ID
         posted = mock_cl.post.call_args[1]["json"]
@@ -143,6 +161,7 @@ class TestCreatePMNeed:
     @pytest.mark.asyncio
     async def test_create_missing_required(self):
         from agent.tools.pm_needs import create_pm_need
+
         result = await _call(create_pm_need, {"pm_id": "pm-test"})
         assert result.get("isError")
 
@@ -150,6 +169,7 @@ class TestCreatePMNeed:
 # ---------------------------------------------------------------------------
 # Risks
 # ---------------------------------------------------------------------------
+
 
 class TestCreateRisk:
     @pytest.mark.asyncio
@@ -159,11 +179,15 @@ class TestCreateRisk:
         mock_cl = _mock_client(mock_resp)
         with patch("agent.tools._http._client", return_value=mock_cl):
             from agent.tools.risks import create_risk
-            result = await _call(create_risk, {
-                "title": "Data feed delayed",
-                "risk_type": "blocker",
-                "severity": "high",
-            })
+
+            result = await _call(
+                create_risk,
+                {
+                    "title": "Data feed delayed",
+                    "risk_type": "blocker",
+                    "severity": "high",
+                },
+            )
         assert not result.get("isError")
         posted = mock_cl.post.call_args[1]["json"]
         assert posted["risk_id"].startswith("risk-")
@@ -176,12 +200,16 @@ class TestCreateRisk:
         mock_cl = _mock_client(mock_resp)
         with patch("agent.tools._http._client", return_value=mock_cl):
             from agent.tools.risks import create_risk
-            result = await _call(create_risk, {
-                "title": "Test",
-                "risk_type": "risk",
-                "severity": "medium",
-                "impacted_pm_ids": "pm-a, pm-b",
-            })
+
+            result = await _call(
+                create_risk,
+                {
+                    "title": "Test",
+                    "risk_type": "risk",
+                    "severity": "medium",
+                    "impacted_pm_ids": "pm-a, pm-b",
+                },
+            )
         assert not result.get("isError")
         posted = mock_cl.post.call_args[1]["json"]
         assert posted["impacted_pm_ids"] == ["pm-a", "pm-b"]
@@ -191,6 +219,7 @@ class TestCreateRisk:
 # Decisions
 # ---------------------------------------------------------------------------
 
+
 class TestResolveDecision:
     @pytest.mark.asyncio
     async def test_resolve(self):
@@ -199,12 +228,16 @@ class TestResolveDecision:
         mock_cl = _mock_client(mock_resp)
         with patch("agent.tools._http._client", return_value=mock_cl):
             from agent.tools.decisions import resolve_decision
-            result = await _call(resolve_decision, {
-                "decision_id": "dec-test",
-                "chosen_path": "Option A",
-                "rationale": "Best fit",
-                "approvers": "Alice, Bob",
-            })
+
+            result = await _call(
+                resolve_decision,
+                {
+                    "decision_id": "dec-test",
+                    "chosen_path": "Option A",
+                    "rationale": "Best fit",
+                    "approvers": "Alice, Bob",
+                },
+            )
         assert not result.get("isError")
         posted = mock_cl.post.call_args[1]["json"]
         assert posted["approvers"] == ["Alice", "Bob"]
@@ -213,6 +246,7 @@ class TestResolveDecision:
     @pytest.mark.asyncio
     async def test_resolve_missing_required(self):
         from agent.tools.decisions import resolve_decision
+
         result = await _call(resolve_decision, {"decision_id": "dec-test"})
         assert result.get("isError")
 
@@ -220,6 +254,7 @@ class TestResolveDecision:
 # ---------------------------------------------------------------------------
 # Reports
 # ---------------------------------------------------------------------------
+
 
 class TestReports:
     @pytest.mark.asyncio
@@ -229,12 +264,14 @@ class TestReports:
         mock_cl = _mock_client(mock_resp)
         with patch("agent.tools._http._client", return_value=mock_cl):
             from agent.tools.reports import get_operating_review_agenda
+
             result = await _call(get_operating_review_agenda, {})
         assert not result.get("isError")
 
     @pytest.mark.asyncio
     async def test_pm_dashboard_requires_id(self):
         from agent.tools.reports import get_pm_dashboard
+
         result = await _call(get_pm_dashboard, {})
         assert result.get("isError")
 
@@ -242,6 +279,7 @@ class TestReports:
 # ---------------------------------------------------------------------------
 # Health
 # ---------------------------------------------------------------------------
+
 
 class TestHealth:
     @pytest.mark.asyncio
@@ -251,6 +289,7 @@ class TestHealth:
         mock_cl = _mock_client(mock_resp)
         with patch("agent.tools._http._health_client", return_value=mock_cl):
             from agent.tools.health import check_health
+
             result = await _call(check_health, {})
         assert not result.get("isError")
         assert "ok" in result["content"][0]["text"]
